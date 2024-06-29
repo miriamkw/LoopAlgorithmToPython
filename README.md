@@ -47,6 +47,15 @@ swift_lib = ctypes.CDLL('./libLoopAlgorithmToPython.dylib')
 swift_lib.generatePrediction.argtypes = [ctypes.c_char_p]
 swift_lib.generatePrediction.restype = ctypes.POINTER(ctypes.c_double)
 
+swift_lib.getPredictionDates.argtypes = [ctypes.c_char_p]
+swift_lib.getPredictionDates.restype = ctypes.c_char_p
+
+swift_lib.getActiveCarbs.argtypes = [ctypes.c_char_p]
+swift_lib.getActiveCarbs.restype = ctypes.c_double
+
+swift_lib.getActiveInsulin.argtypes = [ctypes.c_char_p]
+swift_lib.getActiveInsulin.restype = ctypes.c_double
+
 # Read JSON file
 def read_json_file(file_path):
     with open(file_path, 'r') as f:
@@ -60,22 +69,26 @@ json_bytes = json_str.encode('utf-8') # Convert JSON string to bytes
 # Prepare a variable to receive the length of the predicted values
 length = 82
 
-# Call the Swift function
-result = swift_lib.generatePrediction(json_bytes)
+# Call the Swift functions
+result_prediction_values = swift_lib.generatePrediction(json_bytes)
+result_prediction_dates = swift_lib.getPredictionDates(json_bytes).decode('utf-8')
+result_active_carbs = swift_lib.getActiveCarbs(json_bytes)
+result_active_insulin = swift_lib.getActiveInsulin(json_bytes)
 
 # Read the generated predictions
-array = [result[i] for i in range(length)]
+array = [result_prediction_values[i] for i in range(length)]
 print(array[0])
 print(f"The result from generatePrediction is: {array}")
 
-# Specify the argument types and return type of the prediction dates
-swift_lib.getPredictionDates.argtypes = [ctypes.c_char_p]
-swift_lib.getPredictionDates.restype = ctypes.c_char_p
-
-# Call the Swift function
-result = swift_lib.getPredictionDates(json_bytes).decode('utf-8')
+# Read the dates
 date_list = result.split(',')[:-1]
 print(f"The result from getPredictionDates is: {date_list}")
+
+# Read the active carbohydrates
+print(f"The result from getActiveCarbs is: {result_active_carbs}")
+
+# Read the active insulin
+print(f"The result from getActiveInsulin is: {result_active_insulin}")
 ```
 
 Adjust the paths, function names, and details as per your specific project setup and requirements.

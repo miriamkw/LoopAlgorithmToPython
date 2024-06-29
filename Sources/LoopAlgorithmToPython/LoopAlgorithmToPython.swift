@@ -11,23 +11,13 @@ import HealthKit
 
 @_cdecl("generatePrediction") // Use @_cdecl to expose the function with a C-compatible name
 public func generatePrediction(jsonData: UnsafePointer<Int8>?) -> UnsafeMutablePointer<Double> {
-    /// To generate a lib file, run:
-    /// swiftc -emit-library -o libMySwiftModule.dylib Sources/LoopAlgorithmToPython/LoopAlgorithmToPython.swift
-    
     // TODO: Add opportunity to get prediction effects from only one factor at a time
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
     
-    guard let jsonData = jsonData else {
-        fatalError("No JSON data provided")
-    }
-    
-    // Convert JSON data to Data
-    let data = Data(bytes: jsonData, count: strlen(jsonData))
+    let data = getDataFromJson(jsonData: jsonData)
 
     do {
         // Decode JSON data
-        let input = try decoder.decode(LoopPredictionInput.self, from: data)
+        let input = try getDecoder().decode(LoopPredictionInput.self, from: data)
 
         let prediction = LoopAlgorithm.generatePrediction(
             start: input.glucoseHistory.last?.startDate ?? Date(),
@@ -55,24 +45,12 @@ public func generatePrediction(jsonData: UnsafePointer<Int8>?) -> UnsafeMutableP
     }
 }
 
-@_cdecl("getPredictionDates") // Use @_cdecl to expose the function with a C-compatible name
+@_cdecl("getPredictionDates")
 public func getPredictionDates(jsonData: UnsafePointer<Int8>?) -> UnsafePointer<CChar> {
-    /// To generate a lib file, run:
-    /// swiftc -emit-library -o libMySwiftModule.dylib Sources/LoopAlgorithmToPython/LoopAlgorithmToPython.swift
-    
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
-    
-    guard let jsonData = jsonData else {
-        fatalError("No JSON data provided")
-    }
-    
-    // Convert JSON data to Data
-    let data = Data(bytes: jsonData, count: strlen(jsonData))
-    
+    let data = getDataFromJson(jsonData: jsonData)
+
     do {
-        // Decode JSON data
-        let input = try decoder.decode(LoopPredictionInput.self, from: data)
+        let input = try getDecoder().decode(LoopPredictionInput.self, from: data)
 
         let prediction = LoopAlgorithm.generatePrediction(
             start: input.glucoseHistory.last?.startDate ?? Date(),
@@ -98,4 +76,48 @@ public func getPredictionDates(jsonData: UnsafePointer<Int8>?) -> UnsafePointer<
     }
 }
 
+
+@_cdecl("getActiveCarbs")
+public func getActiveCarbs(jsonData: UnsafePointer<Int8>?) -> Double {
+    let data = getDataFromJson(jsonData: jsonData)
+
+    do {
+        let input = try getDecoder().decode(AlgorithmInputFixture.self, from: data)
+        let output = LoopAlgorithm.run(input: input)
+                        
+        return output.activeCarbs!
+    } catch {
+        fatalError("Error reading or decoding JSON file: \(error)")
+    }
+}
+
+
+@_cdecl("getActiveInsulin")
+public func getActiveInsulin(jsonData: UnsafePointer<Int8>?) -> Double {
+    let data = getDataFromJson(jsonData: jsonData)
+
+    do {
+        let input = try getDecoder().decode(AlgorithmInputFixture.self, from: data)
+        let output = LoopAlgorithm.run(input: input)
+                        
+        return output.activeInsulin!
+    } catch {
+        fatalError("Error reading or decoding JSON file: \(error)")
+    }
+}
+
+func getDataFromJson(jsonData: UnsafePointer<Int8>?) -> Data {
+    guard let jsonData = jsonData else {
+        fatalError("No JSON data provided")
+    }
+    // Convert JSON data to Data
+    let data = Data(bytes: jsonData, count: strlen(jsonData))
+    return data
+}
+
+func getDecoder() -> JSONDecoder {
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+    return decoder
+}
 
