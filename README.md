@@ -195,5 +195,12 @@ After making changes in the Swift code, rebuild the dynamic library by running `
 Run command `pytest`.
 
 
+## Debugging Advice
+
+Debugging with this pipeline can be a pain... Calling functions with python does not give informative error messages, even though the `initialize_exception_handlers()` helps a little bit.
+
+What I found the most useful is to go into LoopAlgorithm repository and run existing tests, but changing the input json files to the input json file that I am trying to use with this repository.
+
+
 
 
