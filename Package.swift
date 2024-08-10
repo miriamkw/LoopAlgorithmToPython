@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "LoopAlgorithmToPython",
+    defaultLocalization: "no",
     platforms: [
         .macOS(.v13),
         .iOS(.v15),
@@ -30,6 +31,9 @@ let package = Package(
         ),
         .testTarget(
             name: "LoopAlgorithmToPythonTests",
-            dependencies: ["LoopAlgorithmToPython"]),
+            dependencies: ["LoopAlgorithmToPython"],
+            resources: [
+                .process("TestData")
+        ])
     ]
 )
