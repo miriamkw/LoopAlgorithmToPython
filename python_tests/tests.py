@@ -1,4 +1,3 @@
-import pytest
 import json
 from loop_to_python_api.api import (
     initialize_exception_handlers,
