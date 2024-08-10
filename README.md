@@ -2,11 +2,13 @@
 
 This Swift module uses LoopAlgorithm to create C functions for generating predictions and prediction dates from JSON data.
 
-How?
-I create a foreign function interface (FFI) in Swift by using the unofficial @_cdecl Swift function. This interfaces the Swift code with C. Then we can create a dynamic library, import it into a Python (or other) repositories, and use for example ctypes to compile the C code.
+This is achieved by creating a foreign function interface (FFI) in Swift by using the unofficial @_cdecl Swift function. This interfaces the Swift code with C. Then we can create a dynamic library, import it into a Python (or other) repositories, and use for example ctypes to compile the C code.
+
 
 
 ## Installation
+
+### TODO: Remove this and add examples with pypi / local builds instead
 
 1. Clone the repository
 2. Build the dynamic library:
@@ -24,13 +26,25 @@ Output should be something like: /release/libLoopAlgorithmToPython.dylib
 Copy that file into your repository.
 
 
-## Exposed functions
+## Repository Overview
+
+### Exposed functions
 
 You can find the C-exposed functions in the file `LoopAlgorithmToPython.swift`.
 
+### Python API 
+
+Python API functions are located in `loop_to_python_api/api.py`.
+
+### Tests and test data
+
+`python_tests/` contains examples of executing all the functions as well as example files providing templates on how to structure the input files.
 
 
 ## Usage in Python
+
+### TODO: Remove this and add examples for pypi usage instead
+
 
 Here's how you can use the dynamic library (`libLoopAlgorithmToPython.dylib`) in Python to call the exposed functions:
 
@@ -106,17 +120,17 @@ To do:
 - [X] add the dlib build script 
   - build to python folder
   - add readme
-- [ ] write python functions api 
+- [X] write python functions api 
 - [ ] write tests with example files
 - [ ] create pypi package
 - [ ] add a build script 
   - automatically run tests on push 
   - automatically build new dlib on push
-- [ ] clean up code swift
+- [X] clean up code swift
 - [ ] clean up code python
 - [ ] update readme with new changes
   - explanation, separating between python and swift code
-  - example usage of the api (with signal handlers)
+  - example usage of the api (with signal handlers), and example inputs (refer to test files)
   - refer to example input files
   - build, venv, run commands
   - pypi
@@ -133,6 +147,9 @@ To do:
 The file `python_api/libLoopAlgorithmToPython.dylib` contains the dynamic library that is containing the C-embedded Swift functions. 
 
 After making changes in the Swift code, rebuild the dynamic library by running `chmod +x build.sh` followed by `./build.sh`.
+
+
+
 
 
 
