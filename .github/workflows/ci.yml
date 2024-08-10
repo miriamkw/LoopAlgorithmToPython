@@ -38,3 +38,11 @@ jobs:
         run: |
           pytest
 
+      - name: Commit and push the generated .dylib file
+        run: |
+          git config --local user.name "GitHub Action"
+          git config --local user.email "action@github.com"
+          git add ./loop_to_python_api/libLoopAlgorithmToPython.dylib
+          git commit -m "Add generated libLoopAlgorithmToPython.dylib"
+          git push origin HEAD:${{ github.ref }}
+
