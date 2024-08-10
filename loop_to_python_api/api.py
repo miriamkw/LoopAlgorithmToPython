@@ -2,15 +2,18 @@
 This file provides an API for calling the functions in the dynamic library. These functions are c-embeddings
 for swift functions, found in Sources/LoopAlgorithmToPython/LoopAlgorithmToPython.swift.
 """
-import pandas as pd
-
-from helpers import get_bytes_from_json
+from loop_to_python_api.helpers import get_bytes_from_json
 
 import ctypes
 import json
+import os
 
 
-swift_lib = ctypes.CDLL('python_api/libLoopAlgorithmToPython.dylib')
+# swift_lib = ctypes.CDLL('python_api/libLoopAlgorithmToPython.dylib')
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.dylib')
+swift_lib = ctypes.CDLL(lib_path)
 
 
 # This function helps with providing more informative error messages if the code fails
@@ -128,54 +131,5 @@ def get_dynamic_carbs_on_board(json_file):
     swift_lib.getDynamicCarbsOnBoard.restype = ctypes.c_double
 
     return swift_lib.getDynamicCarbsOnBoard(json_bytes)
-
-
-
-
-# THIS IS FOR TESTING, REMOVE WHEN DONE!
-
-with open('python_tests/test_files/generate_prediction_input.json', 'r') as f:
-    prediction_input = json.load(f)
-
-
-with open('python_tests/test_files/loop_algorithm_input.json', 'r') as f:
-    loop_algorithm_input = json.load(f)
-
-
-with open('python_tests/test_files/dynamic_carbs_input.json', 'r') as f:
-    dynamic_carbs_input = json.load(f)
-
-
-initialize_exception_handlers()
-prediction_values = generate_prediction(prediction_input)
-print("prediction values", prediction_values)
-print(" ")
-prediction_dates = get_prediction_dates(prediction_input)
-print("prediction dates", prediction_dates)
-print(" ")
-glucose_effect_velocity = get_glucose_effect_velocity(prediction_input)
-print("glucose_effect_velocity", glucose_effect_velocity)
-print(" ")
-glucose_effect_velocity_dates = get_glucose_effect_velocity_dates(prediction_input)
-print("glucose_effect_velocity_dates", glucose_effect_velocity_dates)
-print(" ")
-active_carbs = get_active_carbs(loop_algorithm_input)
-print("active_carbs", active_carbs)
-print(" ")
-active_insulin = get_active_insulin(loop_algorithm_input)
-print("active_insulin", active_insulin)
-print(" ")
-percent_absorption_at_percent_time = percent_absorption_at_percent_time(0.2)
-print("percent_absorption_at_percent_time", percent_absorption_at_percent_time)
-print(" ")
-piecewise_linear_percent_rate_at_percent_time = piecewise_linear_percent_rate_at_percent_time(0.2)
-print("piecewise_linear_percent_rate_at_percent_time", piecewise_linear_percent_rate_at_percent_time)
-print(" ")
-linear_percent_rate_at_percent_time = linear_percent_rate_at_percent_time(0.2)
-print("linear_percent_rate_at_percent_time", linear_percent_rate_at_percent_time)
-print(" ")
-dynamic_carbs_on_board = get_dynamic_carbs_on_board(dynamic_carbs_input)
-print("dynamic_carbs_on_board", dynamic_carbs_on_board)
-print(" ")
 
 
