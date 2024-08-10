@@ -5,7 +5,6 @@ This Swift module uses LoopAlgorithm to create C functions for generating predic
 This is achieved by creating a foreign function interface (FFI) in Swift by using the unofficial @_cdecl Swift function. This interfaces the Swift code with C. Then we can create a dynamic library, import it into a Python (or other) repositories, and use for example ctypes to compile the C code.
 
 
-
 ## Repository Overview
 
 ### Exposed functions
@@ -19,8 +18,6 @@ Python API functions are located in `loop_to_python_api/api.py`.
 ### Tests and test data
 
 `python_tests/` contains examples of executing all the functions as well as example files providing templates on how to structure the input files.
-
-
 
 
 ## Python API Functions
