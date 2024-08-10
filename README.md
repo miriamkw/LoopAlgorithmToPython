@@ -10,7 +10,7 @@ This is achieved by creating a foreign function interface (FFI) in Swift by usin
 
 ### Exposed functions
 
-You can find the C-exposed functions in the file `LoopAlgorithmToPython.swift`.
+You can find the C-exposed functions in the file `Sources/LoopAlgorithmToPython/LoopAlgorithmToPython.swift`.
 
 ### Python API 
 
