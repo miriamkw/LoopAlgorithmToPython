@@ -7,8 +7,8 @@ swift package clean
 swift build --configuration release
 
 # Copy the library
-if cp .build/release/libLoopAlgorithmToPython.dylib ./python_api/; then
-    echo "Library successfully copied to the python_api folder!"
+if cp .build/release/libLoopAlgorithmToPython.dylib ./loop_to_python_api/; then
+    echo "Library successfully copied to the loop_to_python_api folder!"
 else
-    echo "Failed to copy the library to the python_api folder."
+    echo "Failed to copy the library to the loop_to_python_api folder."
 fi
