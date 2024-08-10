@@ -8,6 +8,10 @@ setup(
     author_email='miriamkwolff@outlook.com',
     url='https://github.com/miriamkw/LoopAlgorithmToPython',
     packages=find_packages(),
+    package_data={
+        'loop_to_python_api': ['libLoopAlgorithmToPython.dylib'],
+    },
+    include_package_data=True,
     install_requires=[
         'pytest',
     ],
