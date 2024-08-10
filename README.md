@@ -101,9 +101,9 @@ Adjust the paths, function names, and details as per your specific project setup
 
 
 To do:
-- [ ] add a python folder
-- [ ] add a test folder
-- [ ] add the dlib build script 
+- [X] add a python folder
+- [X] add a test folder
+- [X] add the dlib build script 
   - build to python folder
   - add readme
 - [ ] write python functions api 
@@ -116,10 +116,13 @@ To do:
 - [ ] clean up code python
 - [ ] update readme with new changes
   - explanation, separating between python and swift code
+  - example usage of the api (with signal handlers)
+  - refer to example input files
   - build, venv, run commands
   - pypi
   - running tests
 - [ ] merge to main
+- [ ] next project: take a df as input, convert to json (or do it in tidepool study?)
 
 
 

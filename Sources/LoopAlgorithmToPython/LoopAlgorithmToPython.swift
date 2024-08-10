@@ -439,10 +439,6 @@ extension ISO8601DateFormatter {
 
 
 
-
-
-
-
 // Copied code because the struct was not public
 struct LinearAbsorption: CarbAbsorptionComputable {
     func percentAbsorptionAtPercentTime(_ percentTime: Double) -> Double {
