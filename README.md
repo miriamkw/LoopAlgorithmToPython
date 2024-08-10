@@ -6,12 +6,6 @@ This is achieved by creating a foreign function interface (FFI) in Swift by usin
 
 
 
-## Installation
-
-### TODO: Add examples with pypi 
-
-
-
 ## Repository Overview
 
 ### Exposed functions
