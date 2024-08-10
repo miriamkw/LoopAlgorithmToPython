@@ -77,9 +77,13 @@ def get_glucose_effect_velocity_dates(json_file):
     return date_list
 
 
+def get_active_carbs(json_file):
+    json_bytes = get_bytes_from_json(json_file)
 
+    swift_lib.getActiveCarbs.argtypes = [ctypes.c_char_p]
+    swift_lib.getActiveCarbs.restype = ctypes.c_double
 
-
+    return swift_lib.getActiveCarbs(json_bytes)
 
 
 
@@ -103,5 +107,7 @@ print(" ")
 glucose_effect_velocity_dates = get_glucose_effect_velocity_dates(json_file)
 print("glucose_effect_velocity_dates", glucose_effect_velocity_dates)
 print(" ")
-
+active_carbs = get_active_carbs(json_file)
+print("active_carbs", active_carbs)
+print(" ")
 
