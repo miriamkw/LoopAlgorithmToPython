@@ -100,4 +100,38 @@ Adjust the paths, function names, and details as per your specific project setup
 
 
 
+To do:
+- [ ] add a python folder
+- [ ] add a test folder
+- [ ] add the dlib build script 
+  - build to python folder
+  - add readme
+- [ ] write python functions api 
+- [ ] write tests with example files
+- [ ] create pypi package
+- [ ] add a build script 
+  - automatically run tests on push 
+  - automatically build new dlib on push
+- [ ] clean up code swift
+- [ ] clean up code python
+- [ ] update readme with new changes
+  - explanation, separating between python and swift code
+  - build, venv, run commands
+  - pypi
+  - running tests
+- [ ] merge to main
+
+
+
+
+
+## Build Dynamic Library
+
+The file `python_api/libLoopAlgorithmToPython.dylib` contains the dynamic library that is containing the C-embedded Swift functions. 
+
+After making changes in the Swift code, rebuild the dynamic library by running `chmod +x build.sh` followed by `./build.sh`.
+
+
+
+
 
