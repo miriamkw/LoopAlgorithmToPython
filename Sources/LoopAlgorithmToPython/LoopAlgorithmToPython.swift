@@ -232,24 +232,11 @@ public func getDynamicCarbsOnBoard(jsonData: UnsafePointer<Int8>?) -> Double {
 
         let inputICE = loadICEInputFixture(from: input.inputICE)
         let carbEntries = loadCarbEntryFixture(from: encodeCarbValuesToJsonData(carbValues: input.carbEntries)!)
-        print("carbentries ok")
-        print(input.inputICE[0].startAt)
-        
-        // Parse the date string
-        if let date = dateFormatter.date(from: input.inputICE[0].startAt) {
-            print("Parsed date: \(date)")
-        } else {
-            print("Failed to parse date string.")
-        }
 
         let startDate = dateFormatter.date(from: input.inputICE[0].startAt)!
-        print("startdate ok")
         let endDate = dateFormatter.date(from: input.inputICE.last!.startAt)!
-        print("enddate ok")
         let carbRatio = [AbsoluteScheduleValue(startDate: startDate, endDate: endDate, value: input.carbRatio)]
-        print("carbratio ok")
         let isf =  [AbsoluteScheduleValue(startDate: startDate, endDate: endDate, value: HKQuantity(unit: HKUnit(from: "mg/dL"), doubleValue: input.sensitivity))]
-        print("isf ok")
 
         let statuses = [carbEntries[0]].map(
             to: inputICE,
@@ -258,23 +245,14 @@ public func getDynamicCarbsOnBoard(jsonData: UnsafePointer<Int8>?) -> Double {
             initialAbsorptionTimeOverrun: 2.0,
             absorptionModel: PiecewiseLinearAbsorption()
         )
-        print("STATUSES!")
-        print(statuses)
         // TODO: Add a function for different absorbrionmodels
-        
-        print(inputICE[0].startDate)
-        print(inputICE[0].startDate.addingTimeInterval(TimeInterval(60*60*6)))
-        
+
         // The output here is a list of CarbValues with startDate, endDate (equal to startDate), and value (ICE?)
         let carbsOnBoard = statuses.dynamicCarbsOnBoard(
             from: inputICE[0].startDate,
             to: inputICE[0].startDate.addingTimeInterval(TimeInterval(60*60*6)),
             absorptionModel: PiecewiseLinearAbsorption())
-        
-        print("CARBS ON BOARD")
-        print(carbsOnBoard)
-                
-        // Do something
+
         return carbsOnBoard.first?.value ?? 100.0
     } catch {
         fatalError("Error reading or decoding JSON file: \(error)")
