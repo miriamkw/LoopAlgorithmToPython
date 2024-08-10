@@ -121,13 +121,13 @@ To do:
   - build to python folder
   - add readme
 - [X] write python functions api 
-- [ ] write tests with example files
+- [X] write tests with example files
 - [ ] create pypi package
 - [ ] add a build script 
   - automatically run tests on push 
   - automatically build new dlib on push
 - [X] clean up code swift
-- [ ] clean up code python
+- [X] clean up code python
 - [ ] update readme with new changes
   - explanation, separating between python and swift code
   - example usage of the api (with signal handlers), and example inputs (refer to test files)

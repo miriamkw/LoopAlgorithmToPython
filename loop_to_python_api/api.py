@@ -5,7 +5,6 @@ for swift functions, found in Sources/LoopAlgorithmToPython/LoopAlgorithmToPytho
 from loop_to_python_api.helpers import get_bytes_from_json
 
 import ctypes
-import json
 import os
 
 
@@ -53,7 +52,10 @@ def get_prediction_dates(json_file):
     return date_list
 
 
-# TODO: Add combined predictions and dates, with assertequals to check whether they are of same length
+def get_prediction_values_and_dates(json_file):
+    dates = get_prediction_dates(json_file)
+    values = generate_prediction(json_file, len(dates))
+    return values, dates
 
 
 # "Glucose effect velocity" is equivalent to insulin counteraction effect (ICE)
@@ -78,6 +80,14 @@ def get_glucose_effect_velocity_dates(json_file):
     #date_list = [pd.to_datetime(date) for date in date_list]
 
     return date_list
+
+
+def get_glucose_velocity_values_and_dates(json_file):
+    # TODO: Add validation of json dates here to be more flexible?
+
+    dates = get_glucose_effect_velocity_dates(json_file)
+    values = get_glucose_effect_velocity(json_file, len(dates))
+    return values, dates
 
 
 def get_active_carbs(json_file):

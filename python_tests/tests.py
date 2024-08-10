@@ -4,8 +4,10 @@ from loop_to_python_api.api import (
     initialize_exception_handlers,
     generate_prediction,
     get_prediction_dates,
+    get_prediction_values_and_dates,
     get_glucose_effect_velocity,
     get_glucose_effect_velocity_dates,
+    get_glucose_velocity_values_and_dates,
     get_active_carbs,
     get_active_insulin,
     percent_absorption_at_percent_time,
@@ -47,6 +49,17 @@ def test_get_prediction_dates():
     assert isinstance(prediction_dates, list)  # Replace with the expected type or value
 
 
+def test_get_prediction_values_and_dates():
+    prediction_input = get_generate_prediction_input()
+    values, dates = get_prediction_values_and_dates(prediction_input)
+
+    # Assertions to check the types
+    assert isinstance(values, list), "The prediction values should be a list."
+    assert isinstance(dates, list), "The prediction dates should be a list."
+    assert all(isinstance(value, (int, float)) for value in values), "All prediction values should be integers or floats."
+    assert all(isinstance(date, str) for date in dates), "All prediction dates should be strings."
+
+
 def test_get_glucose_effect_velocity():
     prediction_input = get_generate_prediction_input()
     glucose_effect_velocity = get_glucose_effect_velocity(prediction_input)
@@ -57,6 +70,17 @@ def test_get_glucose_effect_velocity_dates():
     prediction_input = get_generate_prediction_input()
     glucose_effect_velocity_dates = get_glucose_effect_velocity_dates(prediction_input)
     assert isinstance(glucose_effect_velocity_dates, list)  # Replace with the expected type or value
+
+
+def test_get_glucose_effect_velocity_values_and_dates():
+    prediction_input = get_generate_prediction_input()
+    values, dates = get_glucose_velocity_values_and_dates(prediction_input)
+
+    # Assertions to check the types
+    assert isinstance(values, list), "The prediction values should be a list."
+    assert isinstance(dates, list), "The prediction dates should be a list."
+    assert all(isinstance(value, (int, float)) for value in values), "All prediction values should be integers or floats."
+    assert all(isinstance(date, str) for date in dates), "All prediction dates should be strings."
 
 
 def test_get_active_carbs():
