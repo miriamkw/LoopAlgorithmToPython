@@ -1,0 +1,15 @@
+
+
+
+# Checkout API and build locally
+1. cd <...>
+2. git clone git clone https://github.com/tidepool-org/LoopAlgorithmToPython.git
+3. cd LoopAlgorithmToPython
+4. ./build.sh
+
+# Checkout branch of simulator and rebuild environment to point at the local copy of LoopAlgorithmToPython 
+5. cd <...>/data-science-simulator
+6. git fetch
+7. git checkout mjc/swift-api
+8. rm -rf ~/miniconda3/envs/tidepool-data-science-simulator 
+9. conda env create -f conda-environment.yml
