@@ -1,0 +1,2 @@
+build:
+  script: build.sh  # This tells Conda to run `build.sh` during the build process
