@@ -140,6 +140,13 @@ def get_active_insulin(json_file):
 
     return swift_lib.getActiveInsulin(json_bytes)
 
+def get_loop_recommendations(json_file, len=72):
+    json_bytes = get_bytes_from_json(json_file)
+
+    swift_lib.getLoopRecommendations.argtypes = [ctypes.c_char_p]
+    swift_lib.getLoopRecommendations.restype = ctypes.c_char_p
+
+    return swift_lib.getLoopRecommendations(json_bytes)
 
 def add_insulin_counteraction_effect_to_df(df, basal, isf, cr, insulin_type='novolog', batch_size=300, overlap=72):
     """
