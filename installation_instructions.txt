@@ -15,5 +15,6 @@
 5. cd repositories/data-science-simulator
 6. git fetch
 7. git checkout mjc/swift-api
-8. rm -rf ~/miniconda3/envs/tidepool-data-science-simulator 
-9. conda env create -f conda-environment.yml
+8. Edit last line of conda-environment.yml to point to LoopAlgorithmToPython
+9. rm -rf ~/miniconda3/envs/tidepool-data-science-simulator 
+10. conda env create -f conda-environment.yml
