@@ -205,6 +205,48 @@ public func getActiveInsulin(jsonData: UnsafePointer<Int8>?) -> Double {
     }
 }
 
+@_cdecl("getLoopRecommendations") // Use @_cdecl to expose the function with a C-compatible name
+public func getLoopRecommendations(jsonData: UnsafePointer<Int8>?) -> UnsafePointer<CChar> {
+    let data: Data = getDataFromJson(jsonData: jsonData)
+
+    do {
+        let input = try getDecoder().decode(AlgorithmInputFixture.self, from: data)
+        let output = LoopAlgorithm.run(input: input)
+        let result = output.recommendationResult
+        
+        var data: LoopAlgorithmDoseRecommendation?
+
+        switch result {
+            case .success(let resp_data):
+                data = resp_data
+            case .failure(let e):
+                print("FAIL")
+                print(e)
+        }
+        
+        let encoder: JSONEncoder = JSONEncoder()
+
+        do {
+            // Encode JSON data
+            let jsonData = try encoder.encode(data)
+
+            // Convert JSON data to string
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                let cString: UnsafeMutablePointer<CChar> = strdup(jsonString)!
+                return UnsafePointer<CChar>(cString)
+            }
+
+        } catch {
+            print("Error encoding JSON: \(error)")
+        }
+      
+    } catch {
+        fatalError("Error reading or decoding JSON file: \(error)")
+    }
+
+    return UnsafePointer<CChar>("")
+}
+
 @_cdecl("percentAbsorptionAtPercentTime")
 public func percentAbsorptionAtPercentTime(_ percentTime: Double) -> Double {
     return PiecewiseLinearAbsorption().percentAbsorptionAtPercentTime(percentTime)
