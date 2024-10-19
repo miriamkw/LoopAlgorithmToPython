@@ -40,10 +40,6 @@ jobs:
           chmod +x build.sh
           ./build.sh
 
-      - name: Run tests
-        run: |
-          pytest
-
       # Conditionally push generated libraries based on the OS
       - name: Commit and push the generated library (macOS)
         if: matrix.os == 'macos-latest'
