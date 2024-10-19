@@ -1,5 +1,9 @@
 name: test_api
-on: push
+on:
+  push:
+    branches:
+      - main
+
 permissions:
   contents: read
 jobs:
