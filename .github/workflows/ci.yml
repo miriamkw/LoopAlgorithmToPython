@@ -47,10 +47,13 @@ jobs:
           elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
             chmod +x build.sh
             ./build.sh
-          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            echo "Running Windows build process..."
-            pwsh ./build.ps1 
           fi
+
+      - name: Run build script Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo "Running Windows build process..."
+          pwsh ./build.ps1 
 
       # Conditionally push generated libraries based on the OS
       - name: Commit and push the generated library (macOS)
