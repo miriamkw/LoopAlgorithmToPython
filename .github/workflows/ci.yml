@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [windows-latest]
 
     steps:
       - name: Checkout code
@@ -41,8 +41,11 @@ jobs:
 
       - name: Run build script
         run: |
+          echo "Building the project..."
           chmod +x build.sh
-          ./build.sh
+          ./build.sh || { echo "Build failed"; exit 1; }
+          echo "Checking output directory..."
+          ls ./loop_to_python_api || echo "Directory not found or empty"
 
       # Conditionally push generated libraries based on the OS
       - name: Commit and push the generated library (macOS)
