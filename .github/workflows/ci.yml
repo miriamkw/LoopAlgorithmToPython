@@ -30,25 +30,12 @@ jobs:
           sudo xcodebuild -runFirstLaunch
 
       # Install Swift on Windows
-      - name: Set up Swift (Windows)
-        shell: pwsh
-        if: matrix.os == 'windows-latest'
-        run: |
-          Invoke-WebRequest -Uri "https://download.swift.org/swift-6.0.1-release/windows10/swift-6.0.1-RELEASE/swift-6.0.1-RELEASE-windows10.exe" -OutFile "swift-installer.exe"
-          Start-Process -FilePath .\swift-installer.exe -ArgumentList "/S" -NoNewWindow -Wait
-          Remove-Item swift-installer.exe
-          
-          $swiftPath = "C:\Program Files\Swift\bin"
-          $env:PATH = "$swiftPath;$env:PATH"
-          Write-Host "Swift installed and PATH updated."
-
-      - name: Verify Swift Installation
-        shell: pwsh
-        if: matrix.os == 'windows-latest'
-        run: |
-          $swiftPath = "C:\Program Files\Swift\bin"
-          $env:PATH = "$swiftPath;$env:PATH"
-          swift --version
+      - uses: SwiftyLab/setup-swift@latest
+      - name: Get swift version
+        run: swift --version
+      - name: Get swift version in macOS
+        if: runner.os == 'macOS'
+        run: xcrun --toolchain ${{ env.TOOLCHAINS }} swift --version
 
       - name: Install dependencies
         shell: bash  # Force bash shell on all platforms, including Windows
