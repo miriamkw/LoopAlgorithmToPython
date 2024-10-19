@@ -44,6 +44,8 @@ jobs:
       - name: Verify Swift Installation
         if: matrix.os == 'windows-latest'
         run: |
+          # Verify that Swift is available in the current session
+          $env:PATH = "C:\Program Files\Swift\bin;" + $env:PATH
           swift --version
 
       - name: Install dependencies
