@@ -30,15 +30,12 @@ jobs:
           sudo xcodebuild -runFirstLaunch
 
       # Install Swift on Windows
-      - uses: MinoruSekine/setup-scoop@v4.0.1
-        with:
-          buckets: extras
-          apps: doxygen plantuml
-
-      - name: Install Swift on Windows
+      - name: Install Swift Manually
         if: matrix.os == 'windows-latest'
         run: |
-          scoop install swift
+          Invoke-WebRequest -Uri "https://download.swift.org/swift-6.0.1-release/windows10/swift-6.0.1-RELEASE/swift-6.0.1-RELEASE-windows10.exe" -OutFile "swift-installer.exe"
+          Start-Process -FilePath .\swift-installer.exe -ArgumentList "/S" -NoNewWindow -Wait
+          Remove-Item swift-installer.exe
 
       - name: Install dependencies
         shell: bash  # Force bash shell on all platforms, including Windows
