@@ -29,6 +29,14 @@ jobs:
           sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
           sudo xcodebuild -runFirstLaunch
 
+      # Install Swift on Windows
+      - name: Install Swift on Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          Invoke-WebRequest -Uri https://github.com/apple/swift/releases/download/5.5.3/Swift-5.5.3-Windows10.exe -OutFile swift-installer.exe
+          Start-Process -FilePath .\swift-installer.exe -ArgumentList '/S' -NoNewWindow -Wait
+          Remove-Item swift-installer.exe
+
       - name: Install dependencies
         shell: bash  # Force bash shell on all platforms, including Windows
         run: |
