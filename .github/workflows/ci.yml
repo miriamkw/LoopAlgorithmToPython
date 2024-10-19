@@ -31,21 +31,23 @@ jobs:
 
       # Install Swift on Windows
       - name: Set up Swift (Windows)
+        shell: pwsh
         if: matrix.os == 'windows-latest'
         run: |
           Invoke-WebRequest -Uri "https://download.swift.org/swift-6.0.1-release/windows10/swift-6.0.1-RELEASE/swift-6.0.1-RELEASE-windows10.exe" -OutFile "swift-installer.exe"
           Start-Process -FilePath .\swift-installer.exe -ArgumentList "/S" -NoNewWindow -Wait
           Remove-Item swift-installer.exe
           
-          # Add Swift to PATH
-          $env:PATH += ";C:\Program Files\Swift\bin"  # Update the path according to your installation location
+          $swiftPath = "C:\Program Files\Swift\bin"
+          $env:PATH = "$swiftPath;$env:PATH"
           Write-Host "Swift installed and PATH updated."
 
       - name: Verify Swift Installation
+        shell: pwsh
         if: matrix.os == 'windows-latest'
         run: |
-          # Verify that Swift is available in the current session
-          $env:PATH = "C:\Program Files\Swift\bin;" + $env:PATH
+          $swiftPath = "C:\Program Files\Swift\bin"
+          $env:PATH = "$swiftPath;$env:PATH"
           swift --version
 
       - name: Install dependencies
