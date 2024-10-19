@@ -39,7 +39,8 @@ jobs:
         run: |
           git pull origin ${{ github.ref }} --rebase
 
-      - name: Run build script
+      - name: Run build script Mac and Linux
+        shell: bash  # Force bash shell on all platforms, including Windows
         run: |
           if [ "${{ matrix.os }}" == "macos-latest" ]; then
             chmod +x build.sh
