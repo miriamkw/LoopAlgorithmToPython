@@ -41,11 +41,16 @@ jobs:
 
       - name: Run build script
         run: |
-          echo "Building the project..."
-          chmod +x build.sh
-          ./build.sh || { echo "Build failed"; exit 1; }
-          echo "Checking output directory..."
-          ls ./loop_to_python_api || echo "Directory not found or empty"
+          if [ "${{ matrix.os }}" == "macos-latest" ]; then
+            chmod +x build.sh
+            ./build.sh
+          elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+            chmod +x build.sh
+            ./build.sh
+          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            echo "Running Windows build process..."
+            pwsh ./build.ps1 
+          fi
 
       # Conditionally push generated libraries based on the OS
       - name: Commit and push the generated library (macOS)
