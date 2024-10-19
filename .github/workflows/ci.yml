@@ -46,6 +46,7 @@ jobs:
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
+          git pull origin ${{ github.ref }} --rebase
           git add ./loop_to_python_api/libLoopAlgorithmToPython.dylib
           git commit -m "Add generated libLoopAlgorithmToPython.dylib"
           git push origin HEAD:${{ github.ref }}
@@ -55,6 +56,7 @@ jobs:
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
+          git pull origin ${{ github.ref }} --rebase
           git add ./loop_to_python_api/LoopAlgorithmToPython.dll
           git commit -m "Add generated LoopAlgorithmToPython.dll"
           git push origin HEAD:${{ github.ref }}
@@ -64,6 +66,7 @@ jobs:
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
+          git pull origin ${{ github.ref }} --rebase
           git add ./loop_to_python_api/libLoopAlgorithmToPython.so
           git commit -m "Add generated libLoopAlgorithmToPython.so"
           git push origin HEAD:${{ github.ref }}
