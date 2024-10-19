@@ -7,8 +7,10 @@
 
 import Foundation
 import LoopAlgorithm
-import HealthKit
 
+#if os(macOS)
+import HealthKit
+#endif
 
 func handleException(exception: NSException) {
     print("Uncaught exception: \(exception.description)")
