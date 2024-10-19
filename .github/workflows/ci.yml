@@ -33,9 +33,7 @@ jobs:
       - name: Install Swift on Windows
         if: matrix.os == 'windows-latest'
         run: |
-          Invoke-WebRequest -Uri https://github.com/apple/swift/releases/download/5.5.3/Swift-5.5.3-Windows10.exe -OutFile swift-installer.exe
-          Start-Process -FilePath .\swift-installer.exe -ArgumentList '/S' -NoNewWindow -Wait
-          Remove-Item swift-installer.exe
+          winget install --id Swift.Swift -e --silent
 
       - name: Install dependencies
         shell: bash  # Force bash shell on all platforms, including Windows
