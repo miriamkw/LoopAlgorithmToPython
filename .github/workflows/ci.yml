@@ -1,6 +1,6 @@
 name: CI Workflow
 
-# Trigger the workflow on push and pull request events
+# Trigger the workflow on push and pull request events (limited to the main branch)
 on:
   push:
   pull_request:
@@ -8,7 +8,10 @@ on:
 # Define the jobs to run in the workflow
 jobs:
   build-and-test:
-    runs-on: macos-latest  # Use macOS for Swift and iOS-specific dependencies
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
 
     steps:
       - name: Checkout code
@@ -19,7 +22,9 @@ jobs:
         with:
           python-version: '3.9'  # Specify your required Python version
 
-      - name: Set up Swift
+      # macOS-specific steps (Swift setup and dylib generation)
+      - name: Set up Swift (only on macOS)
+        if: matrix.os == 'macos-latest'
         run: |
           sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
           sudo xcodebuild -runFirstLaunch
@@ -38,7 +43,9 @@ jobs:
         run: |
           pytest
 
-      - name: Commit and push the generated .dylib file
+      # Conditionally push generated libraries based on the OS
+      - name: Commit and push the generated library (macOS)
+        if: matrix.os == 'macos-latest'
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
@@ -46,3 +53,20 @@ jobs:
           git commit -m "Add generated libLoopAlgorithmToPython.dylib"
           git push origin HEAD:${{ github.ref }}
 
+      - name: Commit and push the generated library (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          git config --local user.name "GitHub Action"
+          git config --local user.email "action@github.com"
+          git add ./loop_to_python_api/LoopAlgorithmToPython.dll
+          git commit -m "Add generated LoopAlgorithmToPython.dll"
+          git push origin HEAD:${{ github.ref }}
+
+      - name: Commit and push the generated library (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          git config --local user.name "GitHub Action"
+          git config --local user.email "action@github.com"
+          git add ./loop_to_python_api/libLoopAlgorithmToPython.so
+          git commit -m "Add generated libLoopAlgorithmToPython.so"
+          git push origin HEAD:${{ github.ref }}
