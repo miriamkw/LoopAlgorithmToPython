@@ -106,6 +106,27 @@ Combines the `get_glucose_effect_velocity` and `get_glucose_effect_velocity_date
 - **Returns**: A tuple containing a list of glucose effect velocity values and a list of dates.
 
 -------------------------
+### Get Dose Recommendations
+
+`get_dose_recommendations(json_file)`
+
+Uses the Loop algorithm to get the recommended bolus dose and basal rate.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+- **Returns**: A dictionary containing the dose recommendation. Example: 
+```
+{'automatic': {
+    'bolusUnits': 0, 
+    'basalAdjustment': {
+      'unitsPerHour': 0.5,
+      'duration': 1800  # Seconds
+    }
+  }
+}
+```
+
+-------------------------
 
 ### Get Active Carbs
 

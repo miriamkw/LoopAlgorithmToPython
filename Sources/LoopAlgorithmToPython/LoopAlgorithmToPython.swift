@@ -111,6 +111,44 @@ public func getPredictionDates(jsonData: UnsafePointer<Int8>?) -> UnsafePointer<
     }
 }
 
+@_cdecl("getDoseRecommendations")
+public func getDoseRecommendations(jsonData: UnsafePointer<Int8>?) -> UnsafeMutablePointer<CChar> {
+    let data = getDataFromJson(jsonData: jsonData)
+
+    do {
+        let input = try getDecoder().decode(AlgorithmInputFixture.self, from: data)
+        let output = LoopAlgorithm.run(input: input)
+        let recommendation = output.recommendationResult
+        var result: LoopAlgorithmDoseRecommendation?
+        
+        switch recommendation {
+            case .success(let res):
+                result = res
+            case .failure(let e):
+                print(e)
+        }
+        let encoder = JSONEncoder()
+        do {
+            let jsonData = try encoder.encode(result)
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                // Use strdup to create a mutable C-style string
+                if let cString = strdup(jsonString) {
+                    return cString // Return the mutable pointer directly
+                } else {
+                    fatalError("Failed to allocate memory for C-String.")
+                }
+            }
+        } catch {
+            print("Error encoding JSON: \(error)")
+        }
+    } catch {
+        fatalError("Error reading or decoding JSON file: \(error)")
+    }
+    
+    // If the function reaches here, return an empty C-string
+    return strdup("")!
+}
+
 @_cdecl("getGlucoseEffectVelocity") // Use @_cdecl to expose the function with a C-compatible name
 public func getGlucoseEffectVelocity(jsonData: UnsafePointer<Int8>?) -> UnsafeMutablePointer<Double> {
     let data = getDataFromJson(jsonData: jsonData)

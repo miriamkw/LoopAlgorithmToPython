@@ -4,6 +4,7 @@ from loop_to_python_api.api import (
     generate_prediction,
     get_prediction_dates,
     get_prediction_values_and_dates,
+    get_dose_recommendations,
     get_glucose_effect_velocity,
     get_glucose_effect_velocity_dates,
     get_glucose_velocity_values_and_dates,
@@ -21,7 +22,7 @@ def get_generate_prediction_input():
         return json.load(f)
 
 
-def get_loop_aglgorithm_input():
+def get_loop_algorithm_input():
     with open('python_tests/test_files/loop_algorithm_input.json', 'r') as f:
         return json.load(f)
 
@@ -59,6 +60,12 @@ def test_get_prediction_values_and_dates():
     assert all(isinstance(date, str) for date in dates), "All prediction dates should be strings."
 
 
+def test_get_dose_recommendations():
+    loop_algorithm_input = get_loop_algorithm_input()
+    dose_recommendations = get_dose_recommendations(loop_algorithm_input)
+    assert isinstance(dose_recommendations, dict)  # Replace with the expected type or value
+
+
 def test_get_glucose_effect_velocity():
     prediction_input = get_generate_prediction_input()
     glucose_effect_velocity = get_glucose_effect_velocity(prediction_input)
@@ -83,13 +90,13 @@ def test_get_glucose_effect_velocity_values_and_dates():
 
 
 def test_get_active_carbs():
-    loop_algorithm_input = get_loop_aglgorithm_input()
+    loop_algorithm_input = get_loop_algorithm_input()
     active_carbs = get_active_carbs(loop_algorithm_input)
     assert isinstance(active_carbs, float)  # Replace with the expected type or value
 
 
 def test_get_active_insulin():
-    loop_algorithm_input = get_loop_aglgorithm_input()
+    loop_algorithm_input = get_loop_algorithm_input()
     active_insulin = get_active_insulin(loop_algorithm_input)
     assert isinstance(active_insulin, float)  # Replace with the expected type or value
 
