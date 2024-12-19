@@ -20,7 +20,7 @@ let package = Package(
             targets: ["LoopAlgorithmToPython"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/tidepool-org/LoopAlgorithm.git", branch: "main"),
+        .package(url: "https://github.com/tidepool-org/LoopAlgorithm.git", branch: "d4c674fd12f27bf2848b6d46a941ffb32b8a3eee"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
