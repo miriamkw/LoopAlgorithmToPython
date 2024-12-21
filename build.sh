@@ -4,7 +4,7 @@ echo "Building dynamic c library from Swift code..."
 
 # Run the Swift package commands to build the dynamic c library
 swift package clean
-swift package update
+# swift package update
 swift build --configuration release
 
 # Determine the OS and handle the library accordingly
