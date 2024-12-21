@@ -2,7 +2,7 @@ name: CI Workflow
 
 # Trigger the workflow on push and pull request events (limited to the main branch)
 on:
-  push:
+  #push:
   pull_request:
 
 # Define the jobs to run in the workflow
