@@ -1,14 +1,12 @@
 name: CI Workflow
 
-# Trigger the workflow on push and pull request events
 on:
   push:
   pull_request:
 
-# Define the jobs to run in the workflow
 jobs:
   build-and-test:
-    runs-on: macos-latest  # Use macOS for Swift and iOS-specific dependencies
+    runs-on: macos-latest
 
     steps:
       - name: Checkout code
@@ -17,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'  # Specify your required Python version
+          python-version: '3.9'
 
       - name: Set up Swift
         run: |
@@ -34,6 +32,17 @@ jobs:
           chmod +x build.sh
           ./build.sh
 
+      - name: Verify build output
+        run: |
+          ls -l ./loop_to_python_api/
+
+      - name: Check .dylib file
+        run: |
+          if [ ! -f "./loop_to_python_api/libLoopAlgorithmToPython.dylib" ]; then
+            echo ".dylib file is missing!"
+            exit 1
+          fi
+
       - name: Run tests
         run: |
           pytest
@@ -45,4 +54,3 @@ jobs:
           git add ./loop_to_python_api/libLoopAlgorithmToPython.dylib
           git commit -m "Add generated libLoopAlgorithmToPython.dylib"
           git push origin HEAD:${{ github.ref }}
-          
