@@ -32,23 +32,41 @@ jobs:
           chmod +x build.sh
           ./build.sh
 
+      - name: Debug build output
+        run: |
+          echo "Debugging build output..."
+          # List the files in the build directory
+          echo "Listing files in the current directory:"
+          ls -la
+          echo "Looking for .dylib files:"
+          find . -name "*.dylib" -print
+          echo "Checking the .build folder:"
+          ls -la .build/release/
+          # Add more paths if needed to check
+
       - name: Verify build output
         run: |
+          echo "Verifying loop_to_python_api directory contents:"
           ls -l ./loop_to_python_api/
 
       - name: Check .dylib file
         run: |
+          echo "Checking if .dylib file exists in the loop_to_python_api folder..."
           if [ ! -f "./loop_to_python_api/libLoopAlgorithmToPython.dylib" ]; then
             echo ".dylib file is missing!"
             exit 1
+          else
+            echo ".dylib file found."
           fi
 
       - name: Run tests
         run: |
+          echo "Running tests..."
           pytest
 
       - name: Commit and push the generated .dylib file
         run: |
+          echo "Committing and pushing the generated .dylib file..."
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
           git add ./loop_to_python_api/libLoopAlgorithmToPython.dylib
