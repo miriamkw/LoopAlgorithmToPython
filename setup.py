@@ -14,6 +14,8 @@ setup(
     include_package_data=True,
     install_requires=[
         'pytest',
+        'numpy',
+        'pandas',
     ],
     classifiers=[
         'Programming Language :: Python :: 3',

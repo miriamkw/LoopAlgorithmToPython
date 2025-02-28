@@ -9,7 +9,6 @@ import loop_to_python_api.helpers as helpers
 import ctypes
 import os
 import ast
-import time
 
 # swift_lib = ctypes.CDLL('python_api/libLoopAlgorithmToPython.dylib')
 
