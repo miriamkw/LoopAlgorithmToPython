@@ -153,6 +153,42 @@ Fetches the active insulin based on the provided JSON input.
 
 -------------------------
 
+
+### Add Insulin Counteraction Effect to DataFrame
+
+`add_insulin_counteraction_effect_to_df(df, basal, isf, cr, insulin_type='novolog')`
+
+Adds an insulin counteraction effect column to the DataFrame input.
+
+- **Parameters**: 
+  - `df`: The dataframe data input, with at least the columns basal, bolus and CGM, with datetime index.
+  - `basal`: Basal insulin rate (units/hour). 
+  - `isf`: Insulin sensitivity factor (mg/dL per unit). 
+  - `cr`: Carbohydrate ratio (grams per unit of insulin). 
+  - `insulin_type`: Type of insulin (default 'novolog').
+- **Returns**: The dataframe with an "ice" column.
+
+
+-------------------------
+
+### Add Insulin on Board to DataFrame
+
+`add_insulin_on_board_to_df(df, basal, isf, cr, insulin_type='novolog', lookback=72)`
+
+Adds an insulin counteraction effect column to the DataFrame input.
+
+- **Parameters**: 
+  - `df`: The dataframe data input, with at least the columns basal, bolus and CGM, with datetime index.
+  - `basal`: Basal insulin rate (units/hour). 
+  - `isf`: Insulin sensitivity factor (mg/dL per unit). 
+  - `cr`: Carbohydrate ratio (grams per unit of insulin). 
+  - `insulin_type`: Type of insulin (default 'novolog').
+  - `lookback`: Lookback to use for computing insulin on board (default 72).
+- **Returns**: The dataframe with an "ice" column.
+
+-------------------------
+
+
 ### Percent Absorption at Percent Time
 
 `percent_absorption_at_percent_time(percent_time)`
@@ -216,12 +252,14 @@ After making changes in the Swift code, rebuild the dynamic library by running `
 Run command `pytest`.
 
 
-## Debugging Advice
+## Debugging Advice and Disclaimers
+
+This library does currently only work on Mac, but work is in progress to support other operating systems. 
 
 Debugging with this pipeline can be a pain... Calling functions with python does not give informative error messages, even though the `initialize_exception_handlers()` helps a little bit.
 
 What I found the most useful is to go into LoopAlgorithm repository and run existing tests, but changing the input json files to the input json file that I am trying to use with this repository.
 
-
+Getting `zsh: killed` error in the terminal indicates that there are too many processes running, and you have to make sure to stop them - so be aware that this error does not necessarily mean that the dynamic library is corrupted. It is a to do to make the `api.py` a class that automatically makes sure that processes are properly closed after running. 
 
 

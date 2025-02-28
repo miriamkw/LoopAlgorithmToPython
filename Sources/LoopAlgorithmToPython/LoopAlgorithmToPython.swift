@@ -169,7 +169,7 @@ public func getGlucoseEffectVelocity(jsonData: UnsafePointer<Int8>?) -> UnsafeMu
             useIntegralRetrospectiveCorrection: input.useIntegralRetrospectiveCorrection
         )
         var glucoseEffectVelocities: [Double] = []
-                    
+                
         for val in prediction.effects.insulinCounteraction {
             glucoseEffectVelocities.append(val.quantity.doubleValue(for: HKUnit(from: "mg/dL·s")))
         }
@@ -188,7 +188,7 @@ public func getGlucoseEffectVelocityDates(jsonData: UnsafePointer<Int8>?) -> Uns
     
     do {
         let input = try getDecoder().decode(LoopPredictionInput.self, from: data)
-                        
+                            
         let prediction = LoopAlgorithm.generatePrediction(
             start: input.glucoseHistory.last?.startDate ?? Date(),
             glucoseHistory: input.glucoseHistory,
@@ -214,6 +214,29 @@ public func getGlucoseEffectVelocityDates(jsonData: UnsafePointer<Int8>?) -> Uns
     }
 }
 
+@_cdecl("getGlucoseEffectVelocityAndDates")
+public func getGlucoseEffectVelocityAndDates(jsonData: UnsafePointer<Int8>?) -> UnsafePointer<CChar> {
+    let data = getDataFromJson(jsonData: jsonData)
+
+    do {
+        let input = try getDecoder().decode(AlgorithmInputFixture.self, from: data)
+        let output = LoopAlgorithm.run(input: input)
+
+        // Prepare prediction dates as a comma-separated string
+        var predictionsAndDates: String = ""
+        for val in output.effects.insulinCounteraction {
+            predictionsAndDates += val.startDate.ISO8601Format() + ","
+            predictionsAndDates += val.quantity.doubleValue(for: HKUnit(from: "mg/dL·s")).description + " "
+        }
+        let cString = strdup(predictionsAndDates)!
+        
+        return UnsafePointer<CChar>(cString)
+
+    } catch {
+        fatalError("Error reading or decoding JSON file: \(error)")
+    }
+}
+
 @_cdecl("getActiveCarbs")
 public func getActiveCarbs(jsonData: UnsafePointer<Int8>?) -> Double {
     let data = getDataFromJson(jsonData: jsonData)
@@ -221,7 +244,6 @@ public func getActiveCarbs(jsonData: UnsafePointer<Int8>?) -> Double {
     do {
         let input = try getDecoder().decode(AlgorithmInputFixture.self, from: data)
         let output = LoopAlgorithm.run(input: input)
-                        
         return output.activeCarbs!
     } catch {
         fatalError("Error reading or decoding JSON file: \(error)")
@@ -235,9 +257,9 @@ public func getActiveInsulin(jsonData: UnsafePointer<Int8>?) -> Double {
 
     do {
         let input = try getDecoder().decode(AlgorithmInputFixture.self, from: data)
-        let output = LoopAlgorithm.run(input: input)
-                        
-        return output.activeInsulin!
+        let dosesRelativeToBasal = input.doses.annotated(with: input.basal)
+        let activeInsulin = dosesRelativeToBasal.insulinOnBoard(at: input.predictionStart)
+        return activeInsulin
     } catch {
         fatalError("Error reading or decoding JSON file: \(error)")
     }
