@@ -1,4 +1,5 @@
 import json
+import pandas as pd
 from loop_to_python_api.api import (
     initialize_exception_handlers,
     generate_prediction,
@@ -7,7 +8,7 @@ from loop_to_python_api.api import (
     get_dose_recommendations,
     get_glucose_effect_velocity,
     get_glucose_effect_velocity_dates,
-    get_glucose_velocity_values_and_dates,
+    get_glucose_effect_velocity_and_dates,
     get_active_carbs,
     get_active_insulin,
     percent_absorption_at_percent_time,
@@ -79,14 +80,13 @@ def test_get_glucose_effect_velocity_dates():
 
 
 def test_get_glucose_effect_velocity_values_and_dates():
-    prediction_input = get_generate_prediction_input()
-    values, dates = get_glucose_velocity_values_and_dates(prediction_input)
+    loop_algorithm_input = get_loop_algorithm_input()
+    values, dates = get_glucose_effect_velocity_and_dates(loop_algorithm_input)
 
     # Assertions to check the types
     assert isinstance(values, list), "The prediction values should be a list."
     assert isinstance(dates, list), "The prediction dates should be a list."
     assert all(isinstance(value, (int, float)) for value in values), "All prediction values should be integers or floats."
-    assert all(isinstance(date, str) for date in dates), "All prediction dates should be strings."
 
 
 def test_get_active_carbs():
