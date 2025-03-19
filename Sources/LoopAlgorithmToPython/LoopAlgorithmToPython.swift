@@ -7,7 +7,6 @@
 
 import Foundation
 import LoopAlgorithm
-import HealthKit
 
 
 func handleException(exception: NSException) {
@@ -69,7 +68,7 @@ public func generatePrediction(jsonData: UnsafePointer<Int8>?) -> UnsafeMutableP
         var predictedValues: [Double] = []
                 
         for val in prediction.glucose {
-            predictedValues.append(val.quantity.doubleValue(for: HKUnit(from: "mg/dL")))
+            predictedValues.append(val.quantity.doubleValue(for: LoopUnit(from: "mg/dL")))
         }
         let pointer = UnsafeMutablePointer<Double>.allocate(capacity: predictedValues.count)
         pointer.initialize(from: predictedValues, count: predictedValues.count)
@@ -171,7 +170,7 @@ public func getGlucoseEffectVelocity(jsonData: UnsafePointer<Int8>?) -> UnsafeMu
         var glucoseEffectVelocities: [Double] = []
                 
         for val in prediction.effects.insulinCounteraction {
-            glucoseEffectVelocities.append(val.quantity.doubleValue(for: HKUnit(from: "mg/dL·s")))
+            glucoseEffectVelocities.append(val.quantity.doubleValue(for: LoopUnit(from: "mg/dL·s")))
         }
         let pointer = UnsafeMutablePointer<Double>.allocate(capacity: glucoseEffectVelocities.count)
         pointer.initialize(from: glucoseEffectVelocities, count: glucoseEffectVelocities.count)
@@ -357,7 +356,7 @@ public func getDynamicCarbsOnBoard(jsonData: UnsafePointer<Int8>?) -> Double {
         let startDate = dateFormatter.date(from: input.inputICE[0].startAt)!
         let endDate = dateFormatter.date(from: input.inputICE.last!.startAt)!
         let carbRatio = [AbsoluteScheduleValue(startDate: startDate, endDate: endDate, value: input.carbRatio)]
-        let isf =  [AbsoluteScheduleValue(startDate: startDate, endDate: endDate, value: HKQuantity(unit: HKUnit(from: "mg/dL"), doubleValue: input.sensitivity))]
+        let isf =  [AbsoluteScheduleValue(startDate: startDate, endDate: endDate, value: LoopQuantity(unit: LoopUnit(from: "mg/dL"), doubleValue: input.sensitivity))]
 
         let statuses = [carbEntries[0]].map(
             to: inputICE,
@@ -443,15 +442,15 @@ private func loadICEInputFixture(from inputs: [InputICE]) -> [GlucoseEffectVeloc
     let dateFormatter = ISO8601DateFormatter()
     dateFormatter.formatOptions = [.withFullDate, .withTime, .withColonSeparatorInTime, .withDashSeparatorInDate]
     
-    let unit = HKUnit(from: "mg/dL").unitDivided(by: .minute())
+    let unit = LoopUnit(from: "mg/dL·min")
 
     return inputs.compactMap {
         guard let startDate = dateFormatter.date(from: $0.startAt),
               let endDate = dateFormatter.date(from: $0.endAt) else {
-            return nil
+            return GlucoseEffectVelocity(startDate: Date(), endDate: Date(), quantity: LoopQuantity(unit: unit, doubleValue: 0))
         }
 
-        let quantity = HKQuantity(unit: unit, doubleValue: $0.velocity)
+        let quantity = LoopQuantity(unit: unit, doubleValue: $0.velocity)
         return GlucoseEffectVelocity(
             startDate: startDate,
             endDate: endDate,
@@ -485,19 +484,20 @@ private func carbEntriesFromFixture(_ fixture: [JSONDictionary]) -> [FixtureCarb
         return FixtureCarbEntry(
             absorptionTime: absorptionTime,
             startDate: startAt,
-            quantity: HKQuantity(unit: .gram(), doubleValue: $0["grams"] as! Double), foodType: nil
+            quantity: LoopQuantity(unit: .gram, doubleValue: $0["grams"] as! Double),
+            foodType: nil
         )
     }
 }
 
-public struct FixtureCarbEntry: CarbEntry {
+public struct FixtureCarbEntry: CarbEntry, SampleValue {
     public var absorptionTime: TimeInterval?
     public var startDate: Date
-    public var quantity: HKQuantity
+    public var quantity: LoopQuantity
     public var foodType: String?
 
     // Explicit initializer
-    public init(absorptionTime: TimeInterval?, startDate: Date, quantity: HKQuantity, foodType: String?) {
+    public init(absorptionTime: TimeInterval?, startDate: Date, quantity: LoopQuantity, foodType: String?) {
         self.absorptionTime = absorptionTime
         self.startDate = startDate
         self.quantity = quantity
@@ -512,7 +512,7 @@ extension FixtureCarbEntry: Codable {
         self.init(
             absorptionTime: try container.decodeIfPresent(TimeInterval.self, forKey: .absorptionTime),
             startDate: try container.decode(Date.self, forKey: .date),
-            quantity: HKQuantity(unit: .gram(), doubleValue: try container.decode(Double.self, forKey: .grams)),
+            quantity: LoopQuantity(unit: .gram, doubleValue: try container.decode(Double.self, forKey: .grams)),
             foodType: try container.decodeIfPresent(String.self, forKey: .foodType)
         )
     }
@@ -521,7 +521,7 @@ extension FixtureCarbEntry: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeIfPresent(absorptionTime, forKey: .absorptionTime)
         try container.encode(startDate, forKey: .date)
-        try container.encode(quantity.doubleValue(for: .gram()), forKey: .grams)
+        try container.encode(quantity.doubleValue(for: .gram), forKey: .grams)
         try container.encodeIfPresent(foodType, forKey: .foodType)
     }
 
@@ -532,7 +532,6 @@ extension FixtureCarbEntry: Codable {
         case foodType
     }
 }
-
 
 // Extension for ISO8601DateFormatter to handle time zone
 extension ISO8601DateFormatter {
