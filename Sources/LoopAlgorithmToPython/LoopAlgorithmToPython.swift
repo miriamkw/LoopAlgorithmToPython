@@ -9,15 +9,15 @@ import Foundation
 import LoopAlgorithm
 
 
-func handleException(exception: NSException) {
-    print("Uncaught exception: \(exception.description)")
-    print("Stack trace: \(exception.callStackSymbols.joined(separator: "\n"))")
-}
+// func handleException(exception: NSException) {
+//     print("Uncaught exception: \(exception.description)")
+//     print("Stack trace: \(exception.callStackSymbols.joined(separator: "\n"))")
+// }
 
-@_cdecl("initializeExceptionHandler")
-public func initializeExceptionHandler() {
-    NSSetUncaughtExceptionHandler(handleException)
-}
+// @_cdecl("initializeExceptionHandler")
+// public func initializeExceptionHandler() {
+//     NSSetUncaughtExceptionHandler(handleException)
+// }
 
 func signalHandler(signal: Int32) {
     print("Received signal: \(signal)")
