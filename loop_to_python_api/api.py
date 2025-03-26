@@ -11,7 +11,7 @@ import os
 # swift_lib = ctypes.CDLL('python_api/libLoopAlgorithmToPython.dylib')
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.dylib')
+lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.so')
 swift_lib = ctypes.CDLL(lib_path)
 
 
