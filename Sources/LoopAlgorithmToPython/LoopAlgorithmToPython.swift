@@ -268,8 +268,8 @@ public func getLoopRecommendations(jsonData: UnsafePointer<Int8>?) -> UnsafePoin
     } catch {
         fatalError("Error reading or decoding JSON file: \(error)")
     }
-
-    return UnsafePointer<CChar>("")
+    let cString: UnsafeMutablePointer<CChar> = strdup("")!
+    return UnsafePointer<CChar>(cString)
 }
 
 @_cdecl("percentAbsorptionAtPercentTime")
