@@ -13,3 +13,5 @@ loop_to_python_api.egg-info/
 loop_to_python_api/__pycache__/
 python_tests/__pycache__/
 venv/
+*csv
+
