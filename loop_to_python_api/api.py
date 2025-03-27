@@ -132,7 +132,7 @@ def get_active_insulin(json_file):
     return swift_lib.getActiveInsulin(json_bytes)
 
 
-def add_insulin_counteraction_effect_to_df(df, basal, isf, cr, insulin_type='novolog', batch_size=576, overlap=72):
+def add_insulin_counteraction_effect_to_df(df, basal, isf, cr, insulin_type='novolog', batch_size=300, overlap=72):
     """
     Takes a dataframe with at least the columns CGM, bolus, and basal.
     Important note: this function assumes you only give data for a single subject at a time.
