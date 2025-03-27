@@ -132,7 +132,7 @@ def get_active_insulin(json_file):
     return swift_lib.getActiveInsulin(json_bytes)
 
 
-def add_insulin_counteraction_effect_to_df(df, basal, isf, cr, insulin_type='novolog'):
+def add_insulin_counteraction_effect_to_df(df, basal, isf, cr, insulin_type='novolog', batch_size=576, overlap=72):
     """
     Takes a dataframe with at least the columns CGM, bolus, and basal.
     Important note: this function assumes you only give data for a single subject at a time.
@@ -143,17 +143,28 @@ def add_insulin_counteraction_effect_to_df(df, basal, isf, cr, insulin_type='nov
     :param isf: Insulin sensitivity factor
     :param cr: Carbohydrate ratio (will not impact the results)
     :param insulin_type: Which insulin profile to use to compute the insulin on board
+    :param batch_size: How many samples to include in each batch operation. Might be reduced / increased, but default is optimized for general settings.
+    :param overlap: How many time steps to use for computing insulin activity. Can be reduced for some types of insulin, which will improve performance.
     :return: The input df with columns for insulin on board and insulin counteraction effects.
     """
     data = df[['basal', 'bolus', 'CGM']].copy()  # Extract only necessary data to improve performance
     data.loc[:, 'bolus'] = data['bolus'].replace(0.0, np.nan)
-    json_data = helpers.get_json_loop_prediction_input_from_df(data, basal, isf, cr, data.index[-1], insulin_type)
-
-    ice_values, dates = get_glucose_effect_velocity_and_dates(json_file=json_data)
-    dates = [date.tz_localize(None) for date in dates]  # If you want to align to UTC
-
     df.loc[:, "ice"] = np.nan
-    df.loc[dates, "ice"] = ice_values
+
+    step_size = batch_size - overlap  # Determine step size based on overlap
+    num_rows = len(df)
+
+    for start in range(0, num_rows, step_size):
+        end = min(start + batch_size, num_rows)
+        batch_data = data.iloc[start:end]
+        json_data = helpers.get_json_loop_prediction_input_from_df(batch_data, basal, isf, cr, batch_data.index[-1],
+                                                                   insulin_type)
+
+        ice_values, dates = get_glucose_effect_velocity_and_dates(json_file=json_data)
+        dates = [date.tz_localize(None) for date in dates]  # Align to UTC if needed
+
+        # We ignore the first overlap samples for each batch, because we need the insulin data to compute correct values
+        df.loc[dates[overlap:], "ice"] = ice_values[overlap:]
     return df
 
 
