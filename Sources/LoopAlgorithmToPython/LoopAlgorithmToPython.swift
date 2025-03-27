@@ -8,16 +8,42 @@
 import Foundation
 import LoopAlgorithm
 
+#if os(Linux)
+func handleException(signal: Int32) {
+    print("Uncaught signal: \(signal)")
 
-// func handleException(exception: NSException) {
-//     print("Uncaught exception: \(exception.description)")
-//     print("Stack trace: \(exception.callStackSymbols.joined(separator: "\n"))")
-// }
+    // Generate a stack trace
+    let symbols = Thread.callStackSymbols
+    print("Stack trace:")
+    for symbol in symbols {
+        print(symbol)
+    }
 
-// @_cdecl("initializeExceptionHandler")
-// public func initializeExceptionHandler() {
-//     NSSetUncaughtExceptionHandler(handleException)
-// }
+    // Exit the program with the signal code
+    exit(signal)
+}
+
+@_cdecl("initializeExceptionHandler")
+public func initializeExceptionHandler() {
+    signal(SIGILL, handleException)
+    signal(SIGABRT, handleException)
+    signal(SIGFPE, handleException)
+    signal(SIGSEGV, handleException)
+    signal(SIGBUS, handleException)
+    signal(SIGTRAP, handleException)
+}
+
+#else
+func handleException(exception: NSException) {
+    print("Uncaught exception: \(exception.description)")
+    print("Stack trace: \(exception.callStackSymbols.joined(separator: "\n"))")
+}
+
+@_cdecl("initializeExceptionHandler")
+public func initializeExceptionHandler() {
+    NSSetUncaughtExceptionHandler(handleException)
+}
+#endif
 
 func signalHandler(signal: Int32) {
     print("Received signal: \(signal)")
