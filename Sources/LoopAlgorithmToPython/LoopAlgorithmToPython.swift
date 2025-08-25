@@ -73,14 +73,40 @@ public func initializeSignalHandlers() {
 public func generatePrediction(jsonData: UnsafePointer<Int8>?) -> UnsafeMutablePointer<Double> {
     // TODO: Add opportunity to get prediction effects from only one factor at a time
     
-    let data = getDataFromJson(jsonData: jsonData)
+    // Enhanced input validation
+    guard let jsonData = jsonData else {
+        print("ERROR: generatePrediction - NULL JSON data pointer provided")
+        fatalError("generatePrediction failed: NULL JSON data pointer provided")
+    }
+    
+    let jsonLength = strlen(jsonData)
+    guard jsonLength > 0 else {
+        print("ERROR: generatePrediction - Empty JSON data provided (length: \(jsonLength))")
+        fatalError("generatePrediction failed: Empty JSON data provided")
+    }
+        
+    let data: Data
+    do {
+        data = getDataFromJson(jsonData: jsonData)
+    } catch {
+        print("ERROR: generatePrediction - Failed to convert JSON pointer to Data: \(error)")
+        print("ERROR: generatePrediction - JSON string (first 200 chars): \(String(cString: jsonData).prefix(200))")
+        fatalError("generatePrediction failed: JSON data conversion error - \(error)")
+    }
 
     do {
-        // Decode JSON data
-        let input = try getDecoder().decode(LoopPredictionInput.self, from: data)
+        // Decode JSON data with enhanced error reporting
+        let input = try getDecoder().decode(LoopPredictionInput.self, from: data)       
+        
+        guard !input.glucoseHistory.isEmpty else {
+            print("ERROR: generatePrediction - Empty glucose history provided")
+            fatalError("generatePrediction failed: Empty glucose history in input data")
+        }
 
+        let startDate = input.glucoseHistory.last?.startDate ?? Date()
+               
         let prediction = LoopAlgorithm.generatePrediction(
-            start: input.glucoseHistory.last?.startDate ?? Date(),
+            start: startDate,
             glucoseHistory: input.glucoseHistory,
             doses: input.doses,
             carbEntries: input.carbEntries,
@@ -88,20 +114,55 @@ public func generatePrediction(jsonData: UnsafePointer<Int8>?) -> UnsafeMutableP
             sensitivity: input.sensitivity,
             carbRatio: input.carbRatio,
             algorithmEffectsOptions: .all, // Here we can adjust which predictive factor to output
-            useIntegralRetrospectiveCorrection: input.useIntegralRetrospectiveCorrection
+            useIntegralRetrospectiveCorrection: input.useIntegralRetrospectiveCorrection,
+            includingPositiveVelocityAndRC: input.includePositiveVelocityAndRC,
         )
+        
         
         var predictedValues: [Double] = []
                 
         for val in prediction.glucose {
             predictedValues.append(val.quantity.doubleValue(for: LoopUnit(from: "mg/dL")))
         }
+        
+        guard !predictedValues.isEmpty else {
+            print("ERROR: generatePrediction - No predicted values generated")
+            fatalError("generatePrediction failed: Algorithm generated empty prediction result")
+        }
+
         let pointer = UnsafeMutablePointer<Double>.allocate(capacity: predictedValues.count)
         pointer.initialize(from: predictedValues, count: predictedValues.count)
-                
+        
         return pointer
+    } catch let decodingError as DecodingError {
+        print("ERROR: generatePrediction - JSON decoding failed:")
+        switch decodingError {
+        case .dataCorrupted(let context):
+            print("  - Data corrupted: \(context.debugDescription)")
+            print("  - Coding path: \(context.codingPath)")
+        case .keyNotFound(let key, let context):
+            print("  - Key not found: \(key.stringValue)")
+            print("  - Context: \(context.debugDescription)")
+            print("  - Coding path: \(context.codingPath)")
+        case .typeMismatch(let type, let context):
+            print("  - Type mismatch: expected \(type)")
+            print("  - Context: \(context.debugDescription)")
+            print("  - Coding path: \(context.codingPath)")
+        case .valueNotFound(let type, let context):
+            print("  - Value not found: expected \(type)")
+            print("  - Context: \(context.debugDescription)")
+            print("  - Coding path: \(context.codingPath)")
+        @unknown default:
+            print("  - Unknown decoding error: \(decodingError)")
+        }
+        print("ERROR: generatePrediction - JSON content (first 500 chars): \(String(data: data, encoding: .utf8)?.prefix(500) ?? "Unable to convert to string")")
+        fatalError("generatePrediction failed: JSON decoding error - \(decodingError)")
     } catch {
-        fatalError("Error reading or decoding JSON file: \(error)")
+        print("ERROR: generatePrediction - Unexpected error during prediction generation:")
+        print("  - Error type: \(type(of: error))")
+        print("  - Error description: \(error)")
+        print("  - JSON content (first 500 chars): \(String(data: data, encoding: .utf8)?.prefix(500) ?? "Unable to convert to string")")
+        fatalError("generatePrediction failed: Unexpected error - \(error)")
     }
 }
 
@@ -603,7 +664,3 @@ struct LinearAbsorption: CarbAbsorptionComputable {
         }
     }
 }
-
-
-
-
