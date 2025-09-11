@@ -145,7 +145,7 @@ def add_insulin_counteraction_effect_to_df(df, basal, isf, cr, insulin_type='nov
     :param insulin_type: Which insulin profile to use to compute the insulin on board
     :param batch_size: How many samples to include in each batch operation. Might be reduced / increased, but default is optimized for general settings.
     :param overlap: How many time steps to use for computing insulin activity. Can be reduced for some types of insulin, which will improve performance.
-    :return: The input df with columns for insulin on board and insulin counteraction effects.
+    :return: The input df with columns for insulin on board and insulin counteraction effects. Unit of ICE is mg/dL*s
     """
     data = df[['basal', 'bolus', 'CGM']].copy()  # Extract only necessary data to improve performance
     data.loc[:, 'bolus'] = data['bolus'].replace(0.0, np.nan)
