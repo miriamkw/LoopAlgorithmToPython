@@ -48,7 +48,9 @@ jobs:
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
+          git fetch origin
+          git pull origin ${{ github.ref_name }} --rebase
           git add ./loop_to_python_api/libLoopAlgorithmToPython.dylib
-          git commit -m "Add generated libLoopAlgorithmToPython.dylib"
-          git push origin HEAD:${{ github.ref }}
+          git commit -m "Add generated libLoopAlgorithmToPython.dylib" || echo "No changes to commit"
+          git push origin HEAD:${{ github.ref_name }}
 
