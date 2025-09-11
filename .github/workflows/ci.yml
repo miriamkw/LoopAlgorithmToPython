@@ -54,5 +54,9 @@ jobs:
           git config --local user.email "action@github.com"
           git add ./loop_to_python_api/libLoopAlgorithmToPython.dylib
           git commit -m "Add generated libLoopAlgorithmToPython.dylib" || echo "No changes to commit"
-          git push origin HEAD:${{ github.ref_name }}
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          else
+            git push origin HEAD:${{ github.ref_name }}
+          fi
 
