@@ -1,15 +1,10 @@
 name: CI Workflow
 
-# Trigger the workflow when directly pushing to main or when a PR is merged into main
+# Trigger the workflow when pushing to main (includes PR merges)
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
-    types:
-      - closed
 
 # Define the jobs to run in the workflow
 jobs:
