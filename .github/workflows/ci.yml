@@ -1,6 +1,6 @@
 name: CI Workflow
 
-# Trigger the workflow when pushing to main (includes PR merges) or on PR events
+# Trigger on PR events and direct pushes to main (but not PR merges)
 on:
   push:
     branches:
@@ -47,7 +47,8 @@ jobs:
           pytest
 
       - name: Commit and push the generated .dylib file
-        if: github.ref == 'refs/heads/main'
+        # Skip if this is a PR merge (indicated by commit message containing "Merge pull request")
+        if: github.event_name == 'pull_request' || !contains(github.event.head_commit.message, 'Merge pull request')
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
