@@ -15,6 +15,7 @@ from loop_to_python_api.api import (
     piecewise_linear_percent_rate_at_percent_time,
     linear_percent_rate_at_percent_time,
     get_dynamic_carbs_on_board,
+    insulin_percent_effect_remaining,
 )
 
 
@@ -120,5 +121,32 @@ def test_get_dynamic_carbs_on_board():
     dynamic_carbs_input = get_dynamic_carbs_input()
     dynamic_carbs_on_board = get_dynamic_carbs_on_board(dynamic_carbs_input)
     assert isinstance(dynamic_carbs_on_board, float)
+
+
+def test_insulin_percent_effect_remaining():
+    # Test with typical rapid-acting insulin parameters
+    result = insulin_percent_effect_remaining(
+        minutes=60,           # 60 minutes after injection
+        action_duration=360,  # 6 hours total duration  
+        peak_activity_time=75, # Peak at 75 minutes
+        delay=10             # 10 minute delay
+    )
+    
+    # Basic assertions
+    assert isinstance(result, float), "Result should be a float"
+    assert 0.0 <= result <= 1.0, f"Result should be between 0.0 and 1.0, got {result}"
+    
+    # Test edge cases
+    # At time 0 (before delay), should have close to 100% effect remaining
+    result_start = insulin_percent_effect_remaining(0, 360, 75, 10)
+    assert result_start > 0.9, f"At start, should have >90% remaining, got {result_start}"
+    
+    # At very end of action duration, should have very little effect remaining
+    result_end = insulin_percent_effect_remaining(360, 360, 75, 10)
+    assert result_end < 0.1, f"At end, should have <10% remaining, got {result_end}"
+    
+    # At peak time, should have less than 100% but more than end
+    result_peak = insulin_percent_effect_remaining(75, 360, 75, 10)
+    assert result_end < result_peak < result_start, "Effect should decrease over time"
 
 

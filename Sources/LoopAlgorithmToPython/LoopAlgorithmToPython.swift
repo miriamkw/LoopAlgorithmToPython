@@ -265,6 +265,25 @@ public func getActiveInsulin(jsonData: UnsafePointer<Int8>?) -> Double {
     }
 }
 
+@_cdecl("insulinPercentEffectRemaining")
+public func insulinPercentEffectRemaining(jsonData: UnsafePointer<Int8>?) -> Double {
+    let data = getDataFromJson(jsonData: jsonData)
+
+    do {
+        let input = try getDecoder().decode(InsulinPercentEffectInput.self, from: data)
+        
+        let actionDuration = TimeInterval(input.actionDuration * 60)
+        let peakActivityTime = TimeInterval(input.peakActivityTime * 60)
+        let delay = TimeInterval(input.delay * 60)
+        let minutes = TimeInterval(input.minutes * 60)
+        
+        let model = ExponentialInsulinModel(actionDuration: actionDuration, peakActivityTime: peakActivityTime, delay: delay)
+        return model.percentEffectRemaining(at: minutes)
+    } catch {
+        fatalError("Error reading or decoding JSON file: \(error)")
+    }
+}
+
 @_cdecl("percentAbsorptionAtPercentTime")
 public func percentAbsorptionAtPercentTime(_ percentTime: Double) -> Double {
     return PiecewiseLinearAbsorption().percentAbsorptionAtPercentTime(percentTime)
@@ -339,6 +358,13 @@ public struct DynamicCarbsData: Codable {
     let carbEntries: [CarbValue]
     let sensitivity: Double
     let carbRatio: Double
+}
+
+public struct InsulinPercentEffectInput: Codable {
+    let minutes: Double
+    let actionDuration: Double
+    let peakActivityTime: Double
+    let delay: Double
 }
 
 struct CarbValue: Codable {

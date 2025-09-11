@@ -235,3 +235,28 @@ def get_dynamic_carbs_on_board(json_file):
     return swift_lib.getDynamicCarbsOnBoard(json_bytes)
 
 
+def insulin_percent_effect_remaining(minutes, action_duration, peak_activity_time, delay):
+    """
+    Calculate the percentage of insulin effect remaining at a given time point.
+    
+    :param minutes: Time point in minutes to calculate effect remaining
+    :param action_duration: Total duration of insulin action in minutes
+    :param peak_activity_time: Time to peak insulin activity in minutes
+    :param delay: Delay before insulin activity begins in minutes
+    :return: Percentage of insulin effect remaining (0.0 to 1.0)
+    """
+    input_data = {
+        "minutes": minutes,
+        "actionDuration": action_duration,
+        "peakActivityTime": peak_activity_time,
+        "delay": delay
+    }
+    
+    json_bytes = helpers.get_bytes_from_json(input_data)
+
+    swift_lib.insulinPercentEffectRemaining.argtypes = [ctypes.c_char_p]
+    swift_lib.insulinPercentEffectRemaining.restype = ctypes.c_double
+
+    return swift_lib.insulinPercentEffectRemaining(json_bytes)
+
+
