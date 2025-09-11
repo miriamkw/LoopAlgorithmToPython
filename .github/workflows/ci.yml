@@ -52,11 +52,22 @@ jobs:
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
+          
+          # Determine target branch
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TARGET_BRANCH="${{ github.event.pull_request.head.ref }}"
+          else
+            TARGET_BRANCH="${{ github.ref_name }}"
+          fi
+          
+          # Fetch and checkout the target branch
+          git fetch origin
+          git checkout -B $TARGET_BRANCH origin/$TARGET_BRANCH
+          
+          # Add and commit the .dylib file
           git add ./loop_to_python_api/libLoopAlgorithmToPython.dylib
           git commit -m "Add generated libLoopAlgorithmToPython.dylib" || echo "No changes to commit"
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git push origin HEAD:${{ github.event.pull_request.head.ref }}
-          else
-            git push origin HEAD:${{ github.ref_name }}
-          fi
+          
+          # Push to the target branch
+          git push origin $TARGET_BRANCH
 
