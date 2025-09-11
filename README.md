@@ -153,6 +153,31 @@ Fetches the active insulin based on the provided JSON input.
 
 -------------------------
 
+### Insulin Percent Effect Remaining
+
+`insulin_percent_effect_remaining(minutes, action_duration, peak_activity_time, delay)`
+
+Calculates the percentage of insulin effect remaining at a given time point using the exponential insulin model.
+
+- **Parameters**: 
+  - `minutes`: Time point in minutes to calculate effect remaining
+  - `action_duration`: Total duration of insulin action in minutes
+  - `peak_activity_time`: Time to peak insulin activity in minutes  
+  - `delay`: Delay before insulin activity begins in minutes
+- **Returns**: Percentage of insulin effect remaining (0.0 to 1.0)
+- **Example**:
+```python
+# Calculate remaining effect at 60 minutes for typical rapid-acting insulin
+remaining = insulin_percent_effect_remaining(
+    minutes=60,           # 60 minutes after injection
+    action_duration=360,  # 6 hours total duration
+    peak_activity_time=75, # Peak at 75 minutes
+    delay=10             # 10 minute delay
+)
+```
+
+-------------------------
+
 
 ### Add Insulin Counteraction Effect to DataFrame
 
