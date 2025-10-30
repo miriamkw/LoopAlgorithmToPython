@@ -7,9 +7,6 @@ from loop_to_python_api.helpers import get_bytes_from_json
 import ctypes
 import os
 
-
-# swift_lib = ctypes.CDLL('python_api/libLoopAlgorithmToPython.dylib')
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 if os.name == 'posix':
