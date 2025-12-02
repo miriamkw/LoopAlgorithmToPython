@@ -11,8 +11,41 @@ def get_bytes_from_json(json_file):
     return json_bytes
 
 
-def get_json_loop_prediction_input_from_df(data, basal, isf, cr, prediction_start, insulin_type):
+def get_json_loop_prediction_input_from_df(data, basal, isf, cr, prediction_start, insulin_type='novolog',
+                                           max_basal=4.0, max_bolus=9, recommendation_type='automaticBolus',
+                                           suspend_threshold=78, target_lower=101, target_upper=115):
+    """
+    Convert a glucose and insulin DataFrame into a JSON payload suitable for loop prediction input in several
+    functions within `api.py`.
+
+    Args:
+        data (pd.DataFrame): DataFrame containing the following columns:
+            - 'CGM' (mg/dL)
+            - 'bolus' (U)
+            - 'basal' (U/hr)
+            - 'carbs' (g)
+            - 'date' (datetime)
+        basal (float): Scheduled basal insulin rate to use in the prediction.
+        isf (float): Insulin sensitivity factor (mg/dL per unit insulin).
+        cr (float): Carbohydrate ratio (grams per unit insulin).
+        prediction_start (datetime or str): Timestamp for the start of the prediction period.
+        insulin_type (str): Type of insulin used. Must be one of:
+            "novolog", "humalog", "apidra", "fiasp", "lyumjev", "afrezza".
+        max_basal (float, optional): Maximum allowable basal rate in closed loop (U/hr). Defaults to 4.0.
+        max_bolus (float, optional): Maximum allowable bolus dose (U). Defaults to 9.
+        recommendation_type (str, optional): Type of recommendation to generate. Defaults to 'automaticBolus'.
+            Must be one of: "automaticBolus", "tempBasal", "manualBolus".
+        suspend_threshold (float, optional): Glucose level below which insulin delivery is suspended (mg/dL).
+            Defaults to 78.
+        target_lower (float, optional): Lower bound of target glucose range (mg/dL). Defaults to 101.
+        target_upper (float, optional): Upper bound of target glucose range (mg/dL). Defaults to 115.
+
+    Returns:
+        dict: JSON-serializable dictionary structured for loop prediction input,
+              including glucose values, insulin information, and metadata.
+    """
     validate_insulin_type(insulin_type)
+    validate_recommendation_type(recommendation_type)
 
     def get_dates_and_values(column, data):
         if column in data.columns:
@@ -104,17 +137,17 @@ def get_json_loop_prediction_input_from_df(data, basal, isf, cr, prediction_star
         "sensitivity": isf,
     }
     # Adding other mandatory default values for recommendations
-    json_data['maxBasalRate'] = 4.1
-    json_data['maxBolus'] = 9
+    json_data['maxBasalRate'] = max_basal
+    json_data['maxBolus'] = max_bolus
     json_data['predictionStart'] = prediction_start.strftime('%Y-%m-%dT%H:%M:%SZ')
     json_data['recommendationInsulinType'] = insulin_type
-    json_data['recommendationType'] = "automaticBolus"
-    json_data['suspendThreshold'] = 78
+    json_data['recommendationType'] = recommendation_type
+    json_data['suspendThreshold'] = suspend_threshold
     json_data['target'] = [{
             "endDate": data.index[-1].strftime('%Y-%m-%dT%H:%M:%SZ'),
-            "lowerBound": 101,
+            "lowerBound": target_lower,
             "startDate": data.index[0].strftime('%Y-%m-%dT%H:%M:%SZ'),
-            "upperBound": 115
+            "upperBound": target_upper
     }]
     return json_data
 
@@ -123,4 +156,10 @@ def validate_insulin_type(insulin_type):
     insulin_options = ["novolog", 'humalog', "apidra", "fiasp", "lyumjev", "afrezza"]
     if insulin_type not in insulin_options:
         raise ValueError(f"Invalid insulin type: '{insulin_type}'. Must be one of {insulin_options}.")
+
+
+def validate_recommendation_type(recommendation_type):
+    recommendation_options = ["automaticBolus", "tempBasal", "manualBolus"]
+    if recommendation_type not in recommendation_options:
+        raise ValueError(f"Invalid insulin type: '{recommendation_type}'. Must be one of {recommendation_options}.")
 
