@@ -20,6 +20,10 @@ if os.name == 'posix':
         lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.dylib')
     else:  # Linux
         lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.so')
+
+elif os.name == 'nt':  # Windows
+    lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.dll')
+
 else:
     raise OSError("Unsupported operating system")
 
