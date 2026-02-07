@@ -421,9 +421,8 @@ public func getDynamicCarbsOnBoard(jsonData: UnsafePointer<Int8>?) -> Double {
         let carbRatio = [AbsoluteScheduleValue(
             startDate: startDate,
             endDate: endDate,
-            value: LoopQuantity(unit: LoopUnit(from: "g/U"), doubleValue: input.carbRatio)
+            value: input.carbRatio
         )]
-
         let isf = [AbsoluteScheduleValue(
             startDate: startDate,
             endDate: endDate,
