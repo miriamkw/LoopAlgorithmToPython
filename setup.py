@@ -9,7 +9,11 @@ setup(
     url='https://github.com/miriamkw/LoopAlgorithmToPython',
     packages=find_packages(),
     package_data={
-        'loop_to_python_api': ['libLoopAlgorithmToPython.dylib'],
+        'loop_to_python_api': ['dlibs/macos/libLoopAlgorithmToPython.dylib',
+                               'dlibs/linux/libLoopAlgorithmToPython.so',
+                               'dlibs/windows/*.dll',
+                               'dlibs/windows/*.lib'
+                               ],
     },
     include_package_data=True,
     install_requires=[
