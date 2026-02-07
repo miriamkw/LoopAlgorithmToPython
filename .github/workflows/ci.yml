@@ -1,39 +1,27 @@
 name: CI Workflow
 
-# Trigger on PR events and direct pushes to main (but not PR merges)
 on:
   push:
-    branches:
-      - main
-      - feature/windows-linux-compability
+    branches: [main, feature/windows-linux-compability]
   pull_request:
-    branches:
-      - main
-    types:
-      - opened
-      - synchronize
-      - reopened
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
-# Define the jobs to run in the workflow
 jobs:
-  build:
+  build-and-test:
     strategy:
       matrix:
-        include:
-          - os: macos-latest
-            platform: macos
-            artifact: libLoopAlgorithmToPython.dylib
-          - os: ubuntu-latest
-            platform: linux
-            artifact: libLoopAlgorithmToPython.so
+        os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
+    outputs:
+      target_branch: ${{ steps.vars.outputs.target_branch }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
@@ -52,88 +40,67 @@ jobs:
             sudo apt install -y build-essential libc6-dev
           fi
 
-      - name: Install additional Linux dependencies
-        if: matrix.platform == 'linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsqlite3-dev zlib1g-dev libncurses5-dev libicu-dev
-
-      - name: Install Python dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest
 
-      - name: Build Swift library
+      - name: Run build script
         run: |
           chmod +x build.sh
           ./build.sh
-          
-          # Debug: Check what files were actually generated
-          echo "Files in .build/release/:"
-          ls -la .build/release/ || echo "No .build/release directory"
-          
-          echo "Files in loop_to_python_api/dlibs/:"
-          ls -la loop_to_python_api/dlibs/ || echo "No dlibs directory"
-          
-          echo "${{ matrix.platform }} library file:"
-          ls -la loop_to_python_api/dlibs/${{ matrix.platform }}/ || echo "No ${{ matrix.platform }} dlibs"
-
-      - name: Set library path for testing
-        run: |
-          if [[ "${{ matrix.platform }}" == "linux" ]]; then
-            export LD_LIBRARY_PATH="${PWD}/loop_to_python_api/dlibs/linux:$LD_LIBRARY_PATH"
-            echo "LD_LIBRARY_PATH=${PWD}/loop_to_python_api/dlibs/linux:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          fi
 
       - name: Run tests
-        run: |
-          pytest -v -s
+        run: pytest -v -s
 
-      - name: Upload library artifact
+      # Save the library files so the next job can commit them
+      - name: Upload Library Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: library-${{ matrix.platform }}
-          path: loop_to_python_api/dlibs/${{ matrix.platform }}/${{ matrix.artifact }}
-          retention-days: 1
+          name: library-${{ matrix.os }}
+          path: |
+            loop_to_python_api/dlibs/macos/*.dylib
+            loop_to_python_api/dlibs/linux/*.so
 
-  commit-libraries:
-    needs: build
+      - name: Set Target Branch
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "target_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "target_branch=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+  commit-generated-files:
+    needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || !contains(github.event.head_commit.message, 'Merge pull request')
-    
+    # Only push on direct pushes or specific PR actions to avoid loops
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     steps:
-      - name: Checkout code
+      - name: Checkout target branch
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ needs.build-and-test.outputs.target_branch }}
+          fetch-depth: 0
 
-      - name: Download macOS library
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          name: library-macos
-          path: loop_to_python_api/dlibs/macos/
+          path: temp_libs
 
-      - name: Download Linux library
-        uses: actions/download-artifact@v4
-        with:
-          name: library-linux
-          path: loop_to_python_api/dlibs/linux/
-
-      - name: Commit and push libraries
+      - name: Organize and Commit
         run: |
-          git config --local user.name "GitHub Action"
-          git config --local user.email "action@github.com"
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Determine target branch
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            TARGET_BRANCH="${{ github.event.pull_request.head.ref }}"
-          else
-            TARGET_BRANCH="${{ github.ref_name }}"
-          fi
+          # Move files from artifact folders back to the correct repo structure
+          mkdir -p loop_to_python_api/dlibs/macos/
+          mkdir -p loop_to_python_api/dlibs/linux/
           
-          # Fetch latest changes and checkout target branch
-          git fetch origin
-          git checkout -B $TARGET_BRANCH origin/$TARGET_BRANCH
+          # Copy downloaded files (adjusting for nested folder structure created by download-artifact)
+          find temp_libs/library-macos-latest -name "*.dylib" -exec cp {} loop_to_python_api/dlibs/macos/ \;
+          find temp_libs/library-ubuntu-latest -name "*.so" -exec cp {} loop_to_python_api/dlibs/linux/ \;
           
           # Add and commit the library file
           if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
