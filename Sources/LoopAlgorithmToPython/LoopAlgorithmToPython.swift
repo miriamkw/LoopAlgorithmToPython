@@ -288,7 +288,7 @@ public func getGlucoseEffectVelocityAndDates(jsonData: UnsafePointer<Int8>?) -> 
         var predictionsAndDates: String = ""
         for val in output.effects.insulinCounteraction {
             predictionsAndDates += val.startDate.ISO8601Format() + ","
-            predictionsAndDates += val.quantity.doubleValue(for: HKUnit(from: "mg/dL·s")).description + " "
+            predictionsAndDates += val.quantity.doubleValue(for: LoopUnit(from: "mg/dL·s")).description + " "
         }
         let cString = strdup(predictionsAndDates)!
         
