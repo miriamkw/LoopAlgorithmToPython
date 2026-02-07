@@ -281,7 +281,7 @@ Run command `pytest`.
 
 ## Debugging Advice and Disclaimers
 
-This library does currently only work on Mac, but work is in progress to support other operating systems. 
+This library supports macOS, Linux, and Windows platforms with cross-platform dynamic library loading. 
 
 Debugging with this pipeline can be a pain... Calling functions with python does not give informative error messages, even though the `initialize_exception_handlers()` helps a little bit.
 
