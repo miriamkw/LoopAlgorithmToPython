@@ -140,7 +140,7 @@ jobs:
 Built libraries for platforms: ${{ github.event.inputs.platforms }}
 
 Generated with [GitHub Actions](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            
+
 Co-Authored-By: GitHub Actions <noreply@github.com>"
             git push origin ${{ github.ref_name }}
           fi
