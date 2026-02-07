@@ -143,7 +143,7 @@ def get_active_insulin(json_file):
     return swift_lib.getActiveInsulin(json_bytes)
 
 def get_loop_recommendations(json_file, len=72):
-    json_bytes = get_bytes_from_json(json_file)
+    json_bytes = helpers.get_bytes_from_json(json_file)
 
     swift_lib.getLoopRecommendations.argtypes = [ctypes.c_char_p]
     swift_lib.getLoopRecommendations.restype = ctypes.c_char_p

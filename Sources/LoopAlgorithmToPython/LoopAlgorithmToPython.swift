@@ -32,11 +32,11 @@ struct AlgorithmFactory {
     static func createScheduleValue(startDate: Date, endDate: Date, value: Double, unit: String) -> AbsoluteScheduleValue<AlgorithmValue> {
         #if os(Linux) || os(Windows)
             // Linux wants the raw Double
-            return AbsoluteScheduleValue<Double>(startDate: startDate, endDate: endDate, value: value)
+            return AbsoluteScheduleValue<AlgorithmValue>(startDate: startDate, endDate: endDate, value: value)
         #else
             // Mac wants the LoopQuantity object
             let quantity = LoopQuantity(unit: LoopUnit(from: unit), doubleValue: value)
-            return AbsoluteScheduleValue<LoopQuantity>(startDate: startDate, endDate: endDate, value: quantity)
+            return AbsoluteScheduleValue<AlgorithmValue>(startDate: startDate, endDate: endDate, value: quantity)
         #endif
     }
 }
@@ -438,14 +438,9 @@ public func getDynamicCarbsOnBoard(jsonData: UnsafePointer<Int8>?) -> Double {
         let startDate = dateFormatter.date(from: input.inputICE[0].startAt)!
         let endDate = dateFormatter.date(from: input.inputICE.last!.startAt)!
 
-        // Use the factory to get the right type for the current OS
-        let carbRatio: [AbsoluteScheduleValue<AlgorithmValue>] = [
-            AlgorithmFactory.createScheduleValue(startDate: startDate, endDate: endDate, value: input.carbRatio, unit: "g/U")
-        ]
-
-        let isf: [AbsoluteScheduleValue<AlgorithmValue>] = [
-            AlgorithmFactory.createScheduleValue(startDate: startDate, endDate: endDate, value: input.sensitivity, unit: "mg/dL/U")
-        ]
+        // Create schedule values with Double values as expected by the function
+        let carbRatio = [AbsoluteScheduleValue(startDate: startDate, endDate: endDate, value: input.carbRatio)]
+        let isf = [AbsoluteScheduleValue(startDate: startDate, endDate: endDate, value: input.sensitivity)]
 
         let statuses = [carbEntries[0]].map(
             to: inputICE,
