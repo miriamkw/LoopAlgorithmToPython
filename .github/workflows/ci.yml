@@ -64,18 +64,16 @@ jobs:
           :: 1. Load the Visual Studio tools
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           
-          :: 2. Point to your specific DLL folder
-          :: Note the backslashes for Windows pathing
+          :: 2. Set Paths
           set "PATH=%GITHUB_WORKSPACE%\loop_to_python_api\dlibs\windows;%PATH%"
-          
-          :: 3. Define the Swift SDK location
           set "SDKROOT=C:\Users\runneradmin\AppData\Local\Programs\Swift\Platforms\5.10.1\Windows.platform\Developer\SDKs\Windows.sdk"
           
-          :: 4. Verify we can see the DLLs (optional debug step)
-          dir "%GITHUB_WORKSPACE%\loop_to_python_api\dlibs\windows"
+          :: 3. Run Build with VERBOSE flag to see exactly why it's skipping
+          echo Starting Fresh Swift Build...
+          swift build -c release -v
           
-          :: 5. Run the build
-          bash ./build.sh
+          :: 4. Verify build output
+          dir /s .build\*.dll
 
       - name: Verify library was built
         shell: bash
