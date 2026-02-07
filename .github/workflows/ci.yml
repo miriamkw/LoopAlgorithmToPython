@@ -62,12 +62,14 @@ jobs:
 
       - name: Run build script (Windows)
         if: matrix.os == 'windows-latest'
-        shell: cmd
+        shell: powershell
         run: |
-          :: Load the Visual Studio environment so Swift can find the Linker
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          :: Now run the bash script using the initialized environment
-          bash -c "chmod +x build.sh && ./build.sh"
+          # Use the Developer PowerShell module to set up the environment
+          Import-Module "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
+          Enter-VsDevShell -VsInstallPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" -SkipAutomaticDevShell -DevShellArguments "-arch x64"
+          
+          # Now run the build using bash
+          bash ./build.sh
 
       - name: Verify library was built
         shell: bash
