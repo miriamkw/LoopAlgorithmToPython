@@ -54,6 +54,21 @@ jobs:
         run: |
           chmod +x build.sh
           ./build.sh
+          
+          # Debug: Check what files were actually generated
+          echo "Files in .build/release/:"
+          ls -la .build/release/ || echo "No .build/release directory"
+          
+          echo "Files in loop_to_python_api/dlibs/:"
+          ls -la loop_to_python_api/dlibs/ || echo "No dlibs directory"
+          
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            echo "macOS library file:"
+            ls -la loop_to_python_api/dlibs/macos/ || echo "No macOS dlibs"
+          else
+            echo "Linux library file:"
+            ls -la loop_to_python_api/dlibs/linux/ || echo "No Linux dlibs"
+          fi
 
       - name: Run tests
         run: |
