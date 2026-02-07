@@ -5,7 +5,12 @@ let packagePlatforms: [SupportedPlatform]
 let packageLocalization: LanguageTag?
 
 #if os(Windows)
-    packagePlatforms = []
+    packagePlatforms = [
+        .macOS(.v13),
+        .iOS(.v15),
+        .tvOS(.v15),
+        .watchOS(.v8)
+    ]
     packageLocalization = nil
 #else
     packagePlatforms = [
