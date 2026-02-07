@@ -2,10 +2,11 @@
 
 echo "Building dynamic c library from Swift code..."
 
-# Run the Swift package commands to build the dynamic c library
+# Run the Swift package commands
 swift package clean
 swift package update
 echo "Building Swift package..."
+# Note: Windows requires the toolchain to be set up, which your YAML handles
 swift build --configuration release --verbose
 
 echo "Build completed. Checking build output..."
@@ -37,6 +38,20 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
         echo "Failed to copy the .so library to the loop_to_python_api folder."
     fi
 else
-    echo "Unsupported operating system: $OSTYPE"
+    echo "Detected Linux system..."
+    OS_DIR="linux"
+    EXT="so"
+fi
+
+# THE FIX: Search the entire .build folder for the library.
+# Windows uses paths like .build/x86_64-unknown-windows-msvc/release/
+echo "Searching for *LoopAlgorithmToPython.$EXT in .build directory..."
+SOURCE_LIB=$(find .build -name "*LoopAlgorithmToPython.$EXT" | grep -i "release" | head -n 1)
+
+if [ -z "$SOURCE_LIB" ] || [ ! -f "$SOURCE_LIB" ]; then
+    echo "ERROR: Could not find the compiled library!"
+    echo "Check above for Swift compiler errors."
+    echo "Current directory contents:"
+    ls -R .build 2>/dev/null | grep ":$" | head -n 20
     exit 1
 fi
