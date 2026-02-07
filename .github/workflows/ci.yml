@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - feature/windows-linux-compability
   pull_request:
     branches:
       - main
