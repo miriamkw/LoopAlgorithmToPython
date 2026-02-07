@@ -259,10 +259,25 @@ Fetches the dynamic carbohydrates on board based on the provided JSON input.
   - `json_file`: The JSON data input. See python tests and test files for example inputs.
 - **Returns**: The dynamic carbohydrates on board as a double.
 
+⚠️ **Known Issue**: This function currently has a unit conversion error and may fail with "Conversion Error: g is not compatible with mg/dL·s". See the Known Issues section below for more details.
+
 -------------------------
 
+## Known Issues
 
+### `get_dynamic_carbs_on_board()` Function
 
+**Issue**: Unit conversion error preventing function execution  
+**Error Message**: `LoopAlgorithm/LoopQuantity.swift:31: Fatal error: Conversion Error: g is not compatible with mg/dL·s`  
+**Status**: Under investigation  
+
+**Description**: The `get_dynamic_carbs_on_board()` function encounters a unit conversion error when attempting to calculate dynamic carbohydrates on board. The error occurs in the underlying LoopAlgorithm library when trying to convert between gram units (for carbohydrates) and glucose rate units (mg/dL per second).
+
+**Workaround**: Currently, no workaround is available. The function exists in the API for future compatibility but should not be used in production until this issue is resolved.
+
+**Test Status**: The corresponding test (`test_get_dynamic_carbs_on_board`) is skipped in the test suite to prevent CI failures.
+
+---
 
 ## Build Dynamic Library
 
