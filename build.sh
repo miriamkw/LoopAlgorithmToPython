@@ -8,7 +8,17 @@ swift package update
 echo "Building Swift package..."
 swift build --configuration release --verbose
 
-echo "Build completed. Files in .build/release/:"
+echo "Build completed. Checking build output..."
+
+# Check if build directory exists
+if [ ! -d ".build/release/" ]; then
+    echo "ERROR: No .build/release directory found!"
+    echo "Available .build directories:"
+    ls -la .build/ 2>/dev/null || echo "No .build directory found at all"
+    exit 1
+fi
+
+echo "Files in .build/release/:"
 ls -la .build/release/ 2>/dev/null || echo "No .build/release directory found"
 
 # Detect the operating system and copy the appropriate library

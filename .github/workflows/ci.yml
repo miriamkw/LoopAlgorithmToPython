@@ -52,6 +52,28 @@ jobs:
           chmod +x build.sh
           ./build.sh
 
+      - name: Verify library was built
+        run: |
+          echo "Checking if library was built successfully..."
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            EXPECTED_LIB="loop_to_python_api/dlibs/macos/libLoopAlgorithmToPython.dylib"
+          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            EXPECTED_LIB="loop_to_python_api/dlibs/linux/libLoopAlgorithmToPython.so"
+          fi
+          
+          echo "Expected library: $EXPECTED_LIB"
+          if [ -f "$EXPECTED_LIB" ]; then
+            echo "✓ Library found: $EXPECTED_LIB"
+            ls -la "$EXPECTED_LIB"
+          else
+            echo "✗ Library NOT found: $EXPECTED_LIB"
+            echo "Contents of dlibs directory:"
+            find loop_to_python_api/dlibs/ -type f -name "*" 2>/dev/null || echo "No files found in dlibs/"
+            echo "Contents of .build/release/:"
+            find .build/release/ -name "*" -type f 2>/dev/null || echo "No files found in .build/release/"
+            exit 1
+          fi
+
       - name: Run tests
         shell: bash
         run: |
