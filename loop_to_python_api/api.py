@@ -10,10 +10,20 @@ import ctypes
 import os
 import ast
 
-# swift_lib = ctypes.CDLL('python_api/libLoopAlgorithmToPython.dylib')
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
-lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.dylib')
+
+if os.name == 'posix':
+    if os.uname().sysname == 'Darwin':  # MacOS
+        lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.dylib')
+    else:  # Linux
+        lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.so')
+
+elif os.name == 'nt':  # Windows
+    lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.dll')
+
+else:
+    raise OSError("Unsupported operating system")
+
 swift_lib = ctypes.CDLL(lib_path)
 
 
@@ -131,6 +141,13 @@ def get_active_insulin(json_file):
 
     return swift_lib.getActiveInsulin(json_bytes)
 
+def get_loop_recommendations(json_file, len=72):
+    json_bytes = get_bytes_from_json(json_file)
+
+    swift_lib.getLoopRecommendations.argtypes = [ctypes.c_char_p]
+    swift_lib.getLoopRecommendations.restype = ctypes.c_char_p
+
+    return swift_lib.getLoopRecommendations(json_bytes)
 
 def add_insulin_counteraction_effect_to_df(df, basal, isf, cr, insulin_type='novolog', batch_size=300, overlap=72):
     """

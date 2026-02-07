@@ -15,3 +15,20 @@ python_tests/__pycache__/
 venv/
 *csv
 
+awscli-bundle/install
+awscli-bundle/packages/awscli-1.37.16.tar.gz
+awscli-bundle/packages/botocore-1.36.16.tar.gz
+awscli-bundle/packages/colorama-0.4.5.tar.gz
+awscli-bundle/packages/docutils-0.16.tar.gz
+awscli-bundle/packages/jmespath-0.10.0.tar.gz
+awscli-bundle/packages/jmespath-1.0.1.tar.gz
+awscli-bundle/packages/pyasn1-0.6.1.tar.gz
+awscli-bundle/packages/python-dateutil-2.9.0.post0.tar.gz
+awscli-bundle/packages/pyyaml-6.0.2.tar.gz
+awscli-bundle/packages/rsa-4.7.2.tar.gz
+awscli-bundle/packages/s3transfer-0.11.2.tar.gz
+awscli-bundle/packages/six-1.17.0.tar.gz
+awscli-bundle/packages/urllib3-1.26.20.tar.gz
+awscli-bundle/packages/virtualenv-16.7.8.tar.gz
+awscli-bundle/packages/setup/setuptools_scm-3.3.3.tar.gz
+awscli-bundle/packages/setup/wheel-0.33.6.tar.gz
