@@ -7,175 +7,43 @@
 
 import Foundation
 import LoopAlgorithm
-/* ORIGINAL CODE COMMENTED OUT
-#if os(Linux)
-func handleException(signal: Int32) {
-    print("Uncaught signal: \(signal)")
 
-    // Generate a stack trace
+// ===== CROSS-PLATFORM EXCEPTION HANDLING =====
+
+private func signalHandler(signal: Int32) {
+    print("Signal \(signal) received")
+    #if os(macOS) || os(iOS) || os(Linux)
     let symbols = Thread.callStackSymbols
     print("Stack trace:")
-    for symbol in symbols {
-        print(symbol)
+    symbols.forEach { print($0) }
+    #else
+    print("Stack trace: (limited support on this platform)")
+    #endif
+    exit(signal)
+}
+
+@_cdecl("initializeExceptionHandler")
+public func initializeExceptionHandler() {
+    #if os(macOS) || os(iOS)
+    NSSetUncaughtExceptionHandler { exception in
+        print("Uncaught exception: \(exception.description)")
+        print("Stack trace: \(exception.callStackSymbols.joined(separator: "\n"))")
     }
-
-    // Exit the program with the signal code
-    exit(signal)
-}
-
-@_cdecl("initializeExceptionHandler")
-public func initializeExceptionHandler() {
-    signal(SIGILL, handleException)
-    signal(SIGABRT, handleException)
-    signal(SIGFPE, handleException)
-    signal(SIGSEGV, handleException)
-    signal(SIGBUS, handleException)
-    signal(SIGTRAP, handleException)
-}
-
-#else
-func handleException(exception: NSException) {
-    print("Uncaught exception: \(exception.description)")
-    print("Stack trace: \(exception.callStackSymbols.joined(separator: "\n"))")
-}
-
-@_cdecl("initializeExceptionHandler")
-public func initializeExceptionHandler() {
-    NSSetUncaughtExceptionHandler(handleException)
-}
-#endif
-
-func signalHandler(signal: Int32) {
-    print("Received signal: \(signal)")
-
-    // Generate a stack trace
-    let symbols = Thread.callStackSymbols
-    print("Stack trace:")
-    for symbol in symbols {
-        print(symbol)
-    }
-
-    // Exit the program with the signal code
-    exit(signal)
+    #endif
+    
+    let signals = [SIGABRT, SIGFPE, SIGILL, SIGSEGV]
+    #if os(macOS) || os(iOS) || os(Linux)
+    let additionalSignals = [SIGBUS, SIGTRAP]
+    (signals + additionalSignals).forEach { signal($0, signalHandler) }
+    #else
+    signals.forEach { signal($0, signalHandler) }
+    #endif
 }
 
 @_cdecl("initializeSignalHandlers")
 public func initializeSignalHandlers() {
-    signal(SIGTRAP, signalHandler)
-    signal(SIGSEGV, signalHandler)
-    signal(SIGABRT, signalHandler)
-    signal(SIGILL, signalHandler)
-    signal(SIGFPE, signalHandler)
-    // Add other signals as needed
+    initializeExceptionHandler()
 }
-*/
-// ===== NEW CROSS-PLATFORM IMPLEMENTATION =====
-
-#if os(macOS) || os(iOS)
-// macOS/iOS: Full NSException and POSIX signal support
-func handleException(exception: NSException) {
-    print("Uncaught exception: \(exception.description)")
-    print("Stack trace: \(exception.callStackSymbols.joined(separator: "\n"))")
-}
-
-@_cdecl("initializeExceptionHandler")
-public func initializeExceptionHandler() {
-    NSSetUncaughtExceptionHandler(handleException)
-}
-
-func signalHandler(signal: Int32) {
-    print("Received signal: \(signal)")
-    let symbols = Thread.callStackSymbols
-    print("Stack trace:")
-    for symbol in symbols {
-        print(symbol)
-    }
-    exit(signal)
-}
-
-@_cdecl("initializeSignalHandlers")
-public func initializeSignalHandlers() {
-    signal(SIGTRAP, signalHandler)
-    signal(SIGSEGV, signalHandler)
-    signal(SIGABRT, signalHandler)
-    signal(SIGILL, signalHandler)
-    signal(SIGFPE, signalHandler)
-    signal(SIGBUS, signalHandler)
-}
-
-#elseif os(Linux)
-// Linux: POSIX signals only (no NSException)
-func signalHandler(signal: Int32) {
-    print("Uncaught signal: \(signal)")
-    let symbols = Thread.callStackSymbols
-    print("Stack trace:")
-    for symbol in symbols {
-        print(symbol)
-    }
-    exit(signal)
-}
-
-@_cdecl("initializeExceptionHandler")
-public func initializeExceptionHandler() {
-    signal(SIGILL, signalHandler)
-    signal(SIGABRT, signalHandler)
-    signal(SIGFPE, signalHandler)
-    signal(SIGSEGV, signalHandler)
-    signal(SIGBUS, signalHandler)
-    signal(SIGTRAP, signalHandler)
-}
-
-@_cdecl("initializeSignalHandlers")
-public func initializeSignalHandlers() {
-    signal(SIGTRAP, signalHandler)
-    signal(SIGSEGV, signalHandler)
-    signal(SIGABRT, signalHandler)
-    signal(SIGILL, signalHandler)
-    signal(SIGFPE, signalHandler)
-    signal(SIGBUS, signalHandler)
-}
-
-#elseif os(Windows)
-// Windows: Limited signal support (SIGABRT, SIGFPE, SIGILL, SIGINT, SIGSEGV, SIGTERM)
-func signalHandler(signal: Int32) {
-    print("Received signal: \(signal)")
-    print("Stack trace: (limited on Windows)")
-    exit(signal)
-}
-
-@_cdecl("initializeExceptionHandler")
-public func initializeExceptionHandler() {
-    print("Exception handlers initialized (Windows - limited support)")
-    // Windows doesn't support all POSIX signals
-    signal(SIGABRT, signalHandler)
-    signal(SIGFPE, signalHandler)
-    signal(SIGILL, signalHandler)
-    signal(SIGSEGV, signalHandler)
-}
-
-@_cdecl("initializeSignalHandlers")
-public func initializeSignalHandlers() {
-    print("Signal handlers initialized (Windows - limited support)")
-    signal(SIGABRT, signalHandler)
-    signal(SIGFPE, signalHandler)
-    signal(SIGILL, signalHandler)
-    signal(SIGSEGV, signalHandler)
-}
-
-#else
-// Other platforms: Stub implementations
-@_cdecl("initializeExceptionHandler")
-public func initializeExceptionHandler() {
-    print("Exception handlers not supported on this platform")
-}
-
-@_cdecl("initializeSignalHandlers")
-public func initializeSignalHandlers() {
-    print("Signal handlers not supported on this platform")
-}
-#endif
-
-// ===== END PLATFORM-SPECIFIC SECTION =====
 
 @_cdecl("generatePrediction") // Use @_cdecl to expose the function with a C-compatible name
 public func generatePrediction(jsonData: UnsafePointer<Int8>?) -> UnsafeMutablePointer<Double> {
