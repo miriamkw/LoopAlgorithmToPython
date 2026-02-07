@@ -3,10 +3,11 @@
 echo "Building dynamic c library from Swift code..."
 
 # 1. Clean and Build
+# Using -v (verbose) is critical for debugging why it's silent
 swift package clean
 swift package update
 echo "Building Swift package..."
-swift build --configuration release --verbose
+swift build --configuration release -v
 
 echo "Build completed. Checking build output..."
 
@@ -40,16 +41,27 @@ else
     echo "Detected Linux system..."
     OS_DIR="linux"
     EXT="so"
+    PREFIX="lib"
 fi
 
 # 3. DYNAMIC SEARCH
-# We search the whole .build folder because Windows/Linux use subfolders
-# like .build/x86_64-unknown-windows-msvc/release/
-echo "Searching for *LoopAlgorithmToPython.$EXT in .build directory..."
-SOURCE_LIB=$(find .build -name "*LoopAlgorithmToPython.$EXT" | grep -i "release" | head -n 1)
+echo "Searching for LoopAlgorithmToPython.$EXT in .build directory..."
+
+# Try searching for both 'libLoopAlgorithmToPython' and 'LoopAlgorithmToPython'
+# We use -iname to ignore case and look specifically for the release folder
+SOURCE_LIB=$(find .build -type f \( -iname "libLoopAlgorithmToPython.$EXT" -o -iname "LoopAlgorithmToPython.$EXT" \) | grep -i "release" | head -n 1)
+
+# If find fails, let's try a direct path check for the standard Windows output location
+if [ -z "$SOURCE_LIB" ]; then
+    DIRECT_WIN_PATH=".build/x86_64-unknown-windows-msvc/release/LoopAlgorithmToPython.dll"
+    if [ -f "$DIRECT_WIN_PATH" ]; then
+        SOURCE_LIB="$DIRECT_WIN_PATH"
+    fi
+fi
 
 if [ -z "$SOURCE_LIB" ] || [ ! -f "$SOURCE_LIB" ]; then
     echo "ERROR: Could not find the compiled library!"
-    echo "Check the Swift compiler logs above for errors."
+    echo "Debugging: Current directory structure in .build:"
+    ls -R .build 2>/dev/null | head -n 20
     exit 1
 fi
