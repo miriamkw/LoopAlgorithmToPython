@@ -32,3 +32,4 @@ awscli-bundle/packages/urllib3-1.26.20.tar.gz
 awscli-bundle/packages/virtualenv-16.7.8.tar.gz
 awscli-bundle/packages/setup/setuptools_scm-3.3.3.tar.gz
 awscli-bundle/packages/setup/wheel-0.33.6.tar.gz
+awscli-bundle.zip
