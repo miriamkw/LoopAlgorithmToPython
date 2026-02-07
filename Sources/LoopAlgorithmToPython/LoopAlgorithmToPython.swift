@@ -23,31 +23,23 @@ private func signalHandler(signal: Int32) {
 }
 
 #if os(Linux) || os(Windows)
-// If the Linux library expects LoopQuantity but doesn't provide it,
-// we define a compatible version here.
-public struct LoopQuantity: Codable {
-    public let unit: LoopUnit
-    public let doubleValue: Double
-
-    public init(unit: LoopUnit, doubleValue: Double) {
-        self.unit = unit
-        self.doubleValue = doubleValue
-    }
-
-    public func doubleValue(for unit: LoopUnit) -> Double {
-        return doubleValue
-    }
-}
-
-public struct LoopUnit: Codable {
-    public let unitString: String
-    public init(from string: String) { self.unitString = string }
-    public static let gram = LoopUnit(from: "g")
-}
+    public typealias AlgorithmValue = Double
+#else
+    public typealias AlgorithmValue = LoopQuantity
 #endif
 
-// This makes AlgorithmValue always LoopQuantity on ALL platforms
-public typealias AlgorithmValue = LoopQuantity
+struct AlgorithmFactory {
+    static func createScheduleValue(startDate: Date, endDate: Date, value: Double, unit: String) -> AbsoluteScheduleValue<AlgorithmValue> {
+        #if os(Linux) || os(Windows)
+            // Linux wants the raw Double
+            return AbsoluteScheduleValue<Double>(startDate: startDate, endDate: endDate, value: value)
+        #else
+            // Mac wants the LoopQuantity object
+            let quantity = LoopQuantity(unit: LoopUnit(from: unit), doubleValue: value)
+            return AbsoluteScheduleValue<LoopQuantity>(startDate: startDate, endDate: endDate, value: quantity)
+        #endif
+    }
+}
 
 @_cdecl("initializeExceptionHandler")
 public func initializeExceptionHandler() {
@@ -446,18 +438,14 @@ public func getDynamicCarbsOnBoard(jsonData: UnsafePointer<Int8>?) -> Double {
         let startDate = dateFormatter.date(from: input.inputICE[0].startAt)!
         let endDate = dateFormatter.date(from: input.inputICE.last!.startAt)!
 
-        // This uses the compatibility layer to work on all platforms
-           let carbRatio = [AbsoluteScheduleValue(
-            startDate: startDate,
-            endDate: endDate,
-            value: LoopQuantity(unit: LoopUnit(from: "g/U"), doubleValue: input.carbRatio)
-        )]
+        // Use the factory to get the right type for the current OS
+        let carbRatio: [AbsoluteScheduleValue<AlgorithmValue>] = [
+            AlgorithmFactory.createScheduleValue(startDate: startDate, endDate: endDate, value: input.carbRatio, unit: "g/U")
+        ]
 
-        let isf = [AbsoluteScheduleValue(
-            startDate: startDate,
-            endDate: endDate,
-            value: LoopQuantity(unit: LoopUnit(from: "mg/dL/U"), doubleValue: input.sensitivity)
-        )]
+        let isf: [AbsoluteScheduleValue<AlgorithmValue>] = [
+            AlgorithmFactory.createScheduleValue(startDate: startDate, endDate: endDate, value: input.sensitivity, unit: "mg/dL/U")
+        ]
 
         let statuses = [carbEntries[0]].map(
             to: inputICE,
@@ -465,7 +453,8 @@ public func getDynamicCarbsOnBoard(jsonData: UnsafePointer<Int8>?) -> Double {
             insulinSensitivity: isf,
             initialAbsorptionTimeOverrun: 2.0,
             absorptionModel: PiecewiseLinearAbsorption()
-        )        // TODO: Add a function for different absorbrionmodels
+        )
+        // TODO: Add a function for different absorbrionmodels
 
         // The output here is a list of CarbValues with startDate, endDate (equal to startDate), and value (ICE?)
         let carbsOnBoard = statuses.dynamicCarbsOnBoard(
@@ -593,7 +582,7 @@ private func carbEntriesFromFixture(_ fixture: [JSONDictionary]) -> [FixtureCarb
 public struct FixtureCarbEntry: CarbEntry, SampleValue {
     public var absorptionTime: TimeInterval?
     public var startDate: Date
-    public var quantity: LoopQuantity
+    public var quantity: LoopQuantity // This will now correctly map to the library's type
     public var foodType: String?
 
     // Explicit initializer
