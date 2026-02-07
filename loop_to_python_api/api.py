@@ -13,7 +13,16 @@ import ast
 # swift_lib = ctypes.CDLL('python_api/libLoopAlgorithmToPython.dylib')
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.dylib')
+
+# Cross-platform library loading
+if os.name == 'posix':
+    if os.uname().sysname == 'Darwin':  # macOS
+        lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.dylib')
+    else:  # Linux
+        lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.so')
+else:
+    raise OSError("Unsupported operating system")
+
 swift_lib = ctypes.CDLL(lib_path)
 
 

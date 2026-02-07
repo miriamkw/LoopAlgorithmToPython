@@ -6,9 +6,22 @@ echo "Building dynamic c library from Swift code..."
 swift package clean
 swift build --configuration release
 
-# Copy the library
-if cp .build/release/libLoopAlgorithmToPython.dylib ./loop_to_python_api/; then
-    echo "Library successfully copied to the loop_to_python_api folder!"
+# Detect the operating system and copy the appropriate library
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    if cp .build/release/libLoopAlgorithmToPython.dylib ./loop_to_python_api/; then
+        echo "Library successfully copied to the loop_to_python_api folder!"
+    else
+        echo "Failed to copy the .dylib library to the loop_to_python_api folder."
+    fi
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Linux
+    if cp .build/release/libLoopAlgorithmToPython.so ./loop_to_python_api/; then
+        echo "Library successfully copied to the loop_to_python_api folder!"
+    else
+        echo "Failed to copy the .so library to the loop_to_python_api folder."
+    fi
 else
-    echo "Failed to copy the library to the loop_to_python_api folder."
+    echo "Unsupported operating system: $OSTYPE"
+    exit 1
 fi

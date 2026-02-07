@@ -16,7 +16,10 @@ on:
 # Define the jobs to run in the workflow
 jobs:
   build-and-test:
-    runs-on: macos-latest  # Use macOS for Swift and iOS-specific dependencies
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -29,8 +32,18 @@ jobs:
 
       - name: Set up Swift
         run: |
-          sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
-          sudo xcodebuild -runFirstLaunch
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+            sudo xcodebuild -runFirstLaunch
+          else
+            # Install Swift for Linux
+            wget https://download.swift.org/swift-6.0.3-release/ubuntu2404/swift-6.0.3-RELEASE/swift-6.0.3-RELEASE-ubuntu24.04.tar.gz
+            tar xzf swift-6.0.3-RELEASE-ubuntu24.04.tar.gz
+            sudo mv swift-6.0.3-RELEASE-ubuntu24.04 /usr/local/swift
+            echo "/usr/local/swift/usr/bin" >> $GITHUB_PATH
+            sudo apt update
+            sudo apt install -y build-essential libc6-dev
+          fi
 
       - name: Install dependencies
         run: |
@@ -64,9 +77,14 @@ jobs:
           git fetch origin
           git checkout -B $TARGET_BRANCH origin/$TARGET_BRANCH
           
-          # Add and commit the .dylib file
-          git add ./loop_to_python_api/libLoopAlgorithmToPython.dylib
-          git commit -m "Add generated libLoopAlgorithmToPython.dylib" || echo "No changes to commit"
+          # Add and commit the library file
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            git add ./loop_to_python_api/libLoopAlgorithmToPython.dylib
+            git commit -m "Add generated libLoopAlgorithmToPython.dylib" || echo "No changes to commit"
+          else
+            git add ./loop_to_python_api/libLoopAlgorithmToPython.so
+            git commit -m "Add generated libLoopAlgorithmToPython.so" || echo "No changes to commit"
+          fi
           
           # Push to the target branch
           git push origin $TARGET_BRANCH
