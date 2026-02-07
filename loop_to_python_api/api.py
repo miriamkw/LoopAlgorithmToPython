@@ -11,15 +11,16 @@ import os
 import ast
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
+dlibs_dir = os.path.join(current_dir, 'dlibs')
 
 if os.name == 'posix':
     if os.uname().sysname == 'Darwin':  # MacOS
-        lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.dylib')
+        lib_path = os.path.join(dlibs_dir, 'macos', 'libLoopAlgorithmToPython.dylib')
     else:  # Linux
-        lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.so')
+        lib_path = os.path.join(dlibs_dir, 'linux', 'libLoopAlgorithmToPython.so')
 
 elif os.name == 'nt':  # Windows
-    lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.dll')
+    lib_path = os.path.join(dlibs_dir, 'windows', 'libLoopAlgorithmToPython.dll')
 
 else:
     raise OSError("Unsupported operating system")

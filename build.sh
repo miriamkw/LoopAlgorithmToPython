@@ -10,13 +10,13 @@ swift build --configuration release
 # Detect the operating system and set the library paths
 if [[ "$OSTYPE" == "darwin"* ]]; then
     SOURCE_LIB=".build/release/libLoopAlgorithmToPython.dylib"
-    DEST_LIB="./loop_to_python_api/libLoopAlgorithmToPython.dylib"
+    DEST_LIB="./loop_to_python_api/dlibs/macos/libLoopAlgorithmToPython.dylib"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     SOURCE_LIB=".build/release/libLoopAlgorithmToPython.so"
-    DEST_LIB="./loop_to_python_api/libLoopAlgorithmToPython.so"
+    DEST_LIB="./loop_to_python_api/dlibs/linux/libLoopAlgorithmToPython.so"
 elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
     SOURCE_LIB=".build/release/LoopAlgorithmToPython.dll"
-    DEST_LIB="./loop_to_python_api/libLoopAlgorithmToPython.dll"
+    DEST_LIB="./loop_to_python_api/dlibs/windows/libLoopAlgorithmToPython.dll"
 else
     echo "Unsupported operating system: $OSTYPE"
     exit 1
