@@ -10,6 +10,7 @@ on:
 jobs:
   build-and-test:
     strategy:
+      fail-fast: false # Prevents Linux from stopping just because macOS failed (and vice versa)
       matrix:
         os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
@@ -52,9 +53,14 @@ jobs:
           ./build.sh
 
       - name: Run tests
-        run: pytest -v -s
+        shell: bash
+        run: |
+          # Help Linux find the shared library
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/loop_to_python_api/dlibs/linux/
+          # Help macOS find the shared library
+          export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$(pwd)/loop_to_python_api/dlibs/macos/
+          pytest -v -s
 
-      # Save the library files so the next job can commit them
       - name: Upload Library Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -62,9 +68,11 @@ jobs:
           path: |
             loop_to_python_api/dlibs/macos/*.dylib
             loop_to_python_api/dlibs/linux/*.so
+          if-no-files-found: error
 
       - name: Set Target Branch
         id: vars
+        shell: bash
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "target_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
@@ -75,8 +83,7 @@ jobs:
   commit-generated-files:
     needs: build-and-test
     runs-on: ubuntu-latest
-    # Only push on direct pushes or specific PR actions to avoid loops
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    if: success() && (github.event_name == 'push' || github.event_name == 'pull_request')
     steps:
       - name: Checkout target branch
         uses: actions/checkout@v4
@@ -94,13 +101,12 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Move files from artifact folders back to the correct repo structure
           mkdir -p loop_to_python_api/dlibs/macos/
           mkdir -p loop_to_python_api/dlibs/linux/
           
-          # Copy downloaded files (adjusting for nested folder structure created by download-artifact)
-          find temp_libs/library-macos-latest -name "*.dylib" -exec cp {} loop_to_python_api/dlibs/macos/ \;
-          find temp_libs/library-ubuntu-latest -name "*.so" -exec cp {} loop_to_python_api/dlibs/linux/ \;
+          # Move files and clean up temp folders
+          find temp_libs/ -name "*.dylib" -exec mv {} loop_to_python_api/dlibs/macos/ \;
+          find temp_libs/ -name "*.so" -exec mv {} loop_to_python_api/dlibs/linux/ \;
           
           # Add and commit the library file
           if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
