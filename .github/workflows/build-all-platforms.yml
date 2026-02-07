@@ -135,12 +135,15 @@ jobs:
           if git diff --staged --quiet; then
             echo "No library changes to commit"
           else
-            git commit -m "🤖 Update cross-platform libraries
+            git commit -m "$(cat <<'EOF'
+🤖 Update cross-platform libraries
 
 Built libraries for platforms: ${{ github.event.inputs.platforms }}
 
 Generated with [GitHub Actions](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-Co-Authored-By: GitHub Actions <noreply@github.com>"
+Co-Authored-By: GitHub Actions <noreply@github.com>
+EOF
+)"
             git push origin ${{ github.ref_name }}
           fi
