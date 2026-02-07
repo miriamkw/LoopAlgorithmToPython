@@ -16,48 +16,44 @@ on:
 
 # Define the jobs to run in the workflow
 jobs:
-  build-and-test:
+  build:
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        include:
+          - os: macos-latest
+            platform: macos
+            artifact: libLoopAlgorithmToPython.dylib
+          - os: ubuntu-latest
+            platform: linux
+            artifact: libLoopAlgorithmToPython.so
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'  # Specify your required Python version
+          python-version: '3.9'
 
       - name: Set up Swift
-        run: |
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
-            sudo xcodebuild -runFirstLaunch
-          else
-            # Install Swift for Linux with debugging
-            echo "Installing Swift for Linux..."
-            wget https://download.swift.org/swift-6.0.3-release/ubuntu2404/swift-6.0.3-RELEASE/swift-6.0.3-RELEASE-ubuntu24.04.tar.gz
-            tar xzf swift-6.0.3-RELEASE-ubuntu24.04.tar.gz
-            sudo mv swift-6.0.3-RELEASE-ubuntu24.04 /usr/local/swift
-            echo "/usr/local/swift/usr/bin" >> $GITHUB_PATH
-            sudo apt update
-            sudo apt install -y build-essential libc6-dev
-            
-            # Verify Swift installation
-            echo "Verifying Swift installation:"
-            ls -la /usr/local/swift/usr/bin/
-            /usr/local/swift/usr/bin/swift --version
-          fi
+        uses: swiftactions/setup-swift@v2
+        with:
+          swift-version: "6.0"
 
-      - name: Install dependencies
+      - name: Install additional Linux dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsqlite3-dev zlib1g-dev libncurses5-dev libicu-dev
+
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run build script
+      - name: Build Swift library
         run: |
           chmod +x build.sh
           ./build.sh
@@ -69,21 +65,51 @@ jobs:
           echo "Files in loop_to_python_api/dlibs/:"
           ls -la loop_to_python_api/dlibs/ || echo "No dlibs directory"
           
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            echo "macOS library file:"
-            ls -la loop_to_python_api/dlibs/macos/ || echo "No macOS dlibs"
-          else
-            echo "Linux library file:"
-            ls -la loop_to_python_api/dlibs/linux/ || echo "No Linux dlibs"
+          echo "${{ matrix.platform }} library file:"
+          ls -la loop_to_python_api/dlibs/${{ matrix.platform }}/ || echo "No ${{ matrix.platform }} dlibs"
+
+      - name: Set library path for testing
+        run: |
+          if [[ "${{ matrix.platform }}" == "linux" ]]; then
+            export LD_LIBRARY_PATH="${PWD}/loop_to_python_api/dlibs/linux:$LD_LIBRARY_PATH"
+            echo "LD_LIBRARY_PATH=${PWD}/loop_to_python_api/dlibs/linux:$LD_LIBRARY_PATH" >> $GITHUB_ENV
           fi
 
       - name: Run tests
         run: |
           pytest -v -s
 
-      - name: Commit and push the generated .dylib file
-        # Skip if this is a PR merge (indicated by commit message containing "Merge pull request")
-        if: github.event_name == 'pull_request' || !contains(github.event.head_commit.message, 'Merge pull request')
+      - name: Upload library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: library-${{ matrix.platform }}
+          path: loop_to_python_api/dlibs/${{ matrix.platform }}/${{ matrix.artifact }}
+          retention-days: 1
+
+  commit-libraries:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || !contains(github.event.head_commit.message, 'Merge pull request')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download macOS library
+        uses: actions/download-artifact@v4
+        with:
+          name: library-macos
+          path: loop_to_python_api/dlibs/macos/
+
+      - name: Download Linux library
+        uses: actions/download-artifact@v4
+        with:
+          name: library-linux
+          path: loop_to_python_api/dlibs/linux/
+
+      - name: Commit and push libraries
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
@@ -95,19 +121,23 @@ jobs:
             TARGET_BRANCH="${{ github.ref_name }}"
           fi
           
-          # Fetch and checkout the target branch
+          # Fetch latest changes and checkout target branch
           git fetch origin
           git checkout -B $TARGET_BRANCH origin/$TARGET_BRANCH
           
-          # Add and commit the library file for the appropriate platform
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            git add ./loop_to_python_api/dlibs/macos/libLoopAlgorithmToPython.dylib
-            git commit -m "Add generated libLoopAlgorithmToPython.dylib" || echo "No changes to commit"
-          else
-            git add ./loop_to_python_api/dlibs/linux/libLoopAlgorithmToPython.so
-            git commit -m "Add generated libLoopAlgorithmToPython.so" || echo "No changes to commit"
-          fi
+          # Add both library files
+          git add loop_to_python_api/dlibs/macos/libLoopAlgorithmToPython.dylib || echo "No macOS library to add"
+          git add loop_to_python_api/dlibs/linux/libLoopAlgorithmToPython.so || echo "No Linux library to add"
           
-          # Push to the target branch
-          git push origin $TARGET_BRANCH
+          # Commit if there are changes
+          if git diff --staged --quiet; then
+            echo "No library changes to commit"
+          else
+            git commit -m "Update compiled libraries for macOS and Linux
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+            git push origin $TARGET_BRANCH
+          fi
 
