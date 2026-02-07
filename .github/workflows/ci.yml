@@ -79,7 +79,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest
+          pytest -v -s
 
       - name: Commit and push the generated .dylib file
         # Skip if this is a PR merge (indicated by commit message containing "Merge pull request")

@@ -64,7 +64,11 @@ def test_get_prediction_values_and_dates():
 
 def test_get_dose_recommendations():
     loop_algorithm_input = get_loop_algorithm_input()
+    print(f"DEBUG: Input loaded: {type(loop_algorithm_input)}")
+    print(f"DEBUG: Input keys: {list(loop_algorithm_input.keys()) if isinstance(loop_algorithm_input, dict) else 'Not a dict'}")
     dose_recommendations = get_dose_recommendations(loop_algorithm_input)
+    print(f"DEBUG: Result type: {type(dose_recommendations)}")
+    print(f"DEBUG: Result content: {dose_recommendations}")
     assert isinstance(dose_recommendations, dict)
 
 
