@@ -5,7 +5,11 @@ echo "Building dynamic c library from Swift code..."
 # Run the Swift package commands to build the dynamic c library
 swift package clean
 swift package update
-swift build --configuration release
+echo "Building Swift package..."
+swift build --configuration release --verbose
+
+echo "Build completed. Files in .build/release/:"
+ls -la .build/release/ 2>/dev/null || echo "No .build/release directory found"
 
 # Detect the operating system and set the library paths
 if [[ "$OSTYPE" == "darwin"* ]]; then
