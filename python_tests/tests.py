@@ -10,6 +10,7 @@ from loop_to_python_api.api import (
     get_glucose_effect_velocity_and_dates,
     get_active_carbs,
     get_active_insulin,
+    get_loop_recommendations,
     percent_absorption_at_percent_time,
     piecewise_linear_percent_rate_at_percent_time,
     linear_percent_rate_at_percent_time,
@@ -120,6 +121,12 @@ def test_get_dynamic_carbs_on_board():
     dynamic_carbs_input = get_dynamic_carbs_input()
     dynamic_carbs_on_board = get_dynamic_carbs_on_board(dynamic_carbs_input)
     assert isinstance(dynamic_carbs_on_board, float)
+
+
+def test_get_loop_recommendations():
+    loop_algorithm_input = get_loop_algorithm_input()
+    loop_recommendations = get_loop_recommendations(loop_algorithm_input)
+    assert isinstance(loop_recommendations, str)
 
 
 def test_insulin_percent_effect_remaining():
