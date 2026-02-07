@@ -1,10 +1,12 @@
 // swift-tools-version: 5.10
 import PackageDescription
 
-// Define platforms conditionally
 let packagePlatforms: [SupportedPlatform]
+let packageLocalization: LanguageTag?
+
 #if os(Windows)
-    packagePlatforms = [] // Windows doesn't need platform-specific tags here
+    packagePlatforms = []
+    packageLocalization = nil
 #else
     packagePlatforms = [
         .macOS(.v13),
@@ -12,10 +14,12 @@ let packagePlatforms: [SupportedPlatform]
         .tvOS(.v15),
         .watchOS(.v8)
     ]
+    packageLocalization = "no"
 #endif
 
 let package = Package(
     name: "LoopAlgorithmToPython",
+    defaultLocalization: packageLocalization,
     platforms: packagePlatforms,
     products: [
         .library(
