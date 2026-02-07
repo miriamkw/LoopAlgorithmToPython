@@ -22,6 +22,24 @@ private func signalHandler(signal: Int32) {
     exit(signal)
 }
 
+#if os(Linux) || os(Windows)
+    // Non-Apple platforms use raw Double
+    public typealias AlgorithmValue = Double
+#else
+    // Apple platforms use LoopQuantity
+    public typealias AlgorithmValue = LoopQuantity
+#endif
+
+extension AbsoluteScheduleValue where T == AlgorithmValue {
+    static func universal(startDate: Date, endDate: Date, value: Double, unit: String) -> AbsoluteScheduleValue<AlgorithmValue> {
+        #if os(Linux) || os(Windows)
+            return AbsoluteScheduleValue(startDate: startDate, endDate: endDate, value: value)
+        #else
+            return AbsoluteScheduleValue(startDate: startDate, endDate: endDate, value: LoopQuantity(unit: LoopUnit(from: unit), doubleValue: value))
+        #endif
+    }
+}
+
 @_cdecl("initializeExceptionHandler")
 public func initializeExceptionHandler() {
     #if os(macOS) || os(iOS)
@@ -91,7 +109,7 @@ public func generatePrediction(jsonData: UnsafePointer<Int8>?) -> UnsafeMutableP
             carbRatio: input.carbRatio,
             algorithmEffectsOptions: .all, // Here we can adjust which predictive factor to output
             useIntegralRetrospectiveCorrection: input.useIntegralRetrospectiveCorrection,
-            includingPositiveVelocityAndRC: input.includePositiveVelocityAndRC,
+            includingPositiveVelocityAndRC: input.includePositiveVelocityAndRC
         )
         
         
@@ -421,7 +439,7 @@ public func getDynamicCarbsOnBoard(jsonData: UnsafePointer<Int8>?) -> Double {
         let carbRatio = [AbsoluteScheduleValue(
             startDate: startDate,
             endDate: endDate,
-            value: input.carbRatio
+            value: LoopQuantity(unit: LoopUnit(from: "g/U"), doubleValue: input.carbRatio)
         )]
         let isf = [AbsoluteScheduleValue(
             startDate: startDate,
