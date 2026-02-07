@@ -64,8 +64,8 @@ jobs:
           git fetch origin
           git checkout -B $TARGET_BRANCH origin/$TARGET_BRANCH
           
-          # Add and commit the .dylib file
-          git add ./loop_to_python_api/libLoopAlgorithmToPython.dylib
+          # Add and commit the .dylib file to new dlibs structure
+          git add ./loop_to_python_api/dlibs/macos/libLoopAlgorithmToPython.dylib
           git commit -m "Add generated libLoopAlgorithmToPython.dylib" || echo "No changes to commit"
           
           # Push to the target branch
