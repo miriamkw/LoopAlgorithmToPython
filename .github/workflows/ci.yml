@@ -10,9 +10,9 @@ on:
 jobs:
   build-and-test:
     strategy:
-      fail-fast: false # Prevents Linux from stopping just because macOS failed (and vice versa)
+      fail-fast: false # Prevents one OS from stopping others from building
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     outputs:
       target_branch: ${{ steps.vars.outputs.target_branch }}
@@ -41,24 +41,41 @@ jobs:
             sudo apt install -y build-essential libc6-dev
           fi
 
+      - name: Set up Swift (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.0"
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest
 
-      - name: Run build script
+      - name: Run build script (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Run build script (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
         run: |
           chmod +x build.sh
           ./build.sh
 
       - name: Verify library was built
+        shell: bash
         run: |
           echo "Checking if library was built successfully..."
           if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
             EXPECTED_LIB="loop_to_python_api/dlibs/macos/libLoopAlgorithmToPython.dylib"
           elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
             EXPECTED_LIB="loop_to_python_api/dlibs/linux/libLoopAlgorithmToPython.so"
+          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            EXPECTED_LIB="loop_to_python_api/dlibs/windows/libLoopAlgorithmToPython.dll"
           fi
           
           echo "Expected library: $EXPECTED_LIB"
@@ -81,6 +98,8 @@ jobs:
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/loop_to_python_api/dlibs/linux/
           # Help macOS find the shared library
           export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$(pwd)/loop_to_python_api/dlibs/macos/
+          # Help Windows find the shared library
+          export PATH=$PATH:$(pwd)/loop_to_python_api/dlibs/windows/
           pytest -v -s
 
       - name: Upload Library Artifact
@@ -90,6 +109,7 @@ jobs:
           path: |
             loop_to_python_api/dlibs/macos/*.dylib
             loop_to_python_api/dlibs/linux/*.so
+            loop_to_python_api/dlibs/windows/*.dll
           if-no-files-found: error
 
       - name: Set Target Branch
@@ -125,10 +145,12 @@ jobs:
           
           mkdir -p loop_to_python_api/dlibs/macos/
           mkdir -p loop_to_python_api/dlibs/linux/
+          mkdir -p loop_to_python_api/dlibs/windows/
           
           # Move files and clean up temp folders
           find temp_libs/ -name "*.dylib" -exec mv {} loop_to_python_api/dlibs/macos/ \;
           find temp_libs/ -name "*.so" -exec mv {} loop_to_python_api/dlibs/linux/ \;
+          find temp_libs/ -name "*.dll" -exec mv {} loop_to_python_api/dlibs/windows/ \;
           
           # Add and commit the library file
           if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
