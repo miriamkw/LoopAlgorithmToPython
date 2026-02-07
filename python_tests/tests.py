@@ -1,5 +1,4 @@
 import json
-import pandas as pd
 from loop_to_python_api.api import (
     initialize_exception_handlers,
     generate_prediction,
