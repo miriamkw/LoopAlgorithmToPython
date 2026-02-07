@@ -61,22 +61,31 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          :: 1. Load the VS Environment
+          :: 1. Initialize Visual Studio Environment
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           
-          :: 2. Set necessary Swift environment variables
+          :: 2. Set the SDK Root
           set "SDKROOT=C:\Users\runneradmin\AppData\Local\Programs\Swift\Platforms\5.10.1\Windows.platform\Developer\SDKs\Windows.sdk"
-          set "SWIFT_BIN=C:\Users\runneradmin\AppData\Local\Programs\Swift\Toolchains\5.10.1+Asserts\usr\bin"
           
-          :: 3. Explicitly add Swift and YOUR dlibs to the PATH
-          set "PATH=%SWIFT_BIN%;%GITHUB_WORKSPACE%\loop_to_python_api\dlibs\windows;%PATH%"
-          
-          :: 4. Run the build using the ABSOLUTE path to swift.exe
+          :: 3. Verify Swift location and run build
+          echo Searching for swift.exe...
+          where swift.exe
+          if %ERRORLEVEL% NEQ 0 (
+            echo "ERROR: swift.exe not found in PATH. Checking manual locations..."
+            dir /s /b C:\Users\runneradmin\AppData\Local\Programs\Swift\swift.exe
+          )
+
           echo Starting Fresh Swift Build...
-          "%SWIFT_BIN%\swift.exe" build -c release -v
+          swift build -c release -v
           
-          :: 5. Locate the result
-          dir /s .build\*.dll
+          if %ERRORLEVEL% NEQ 0 (
+            echo "Swift build failed with exit code %ERRORLEVEL%"
+            exit /b %ERRORLEVEL%
+          )
+
+          :: 4. Show the results
+          echo Build finished. Searching for DLL...
+          dir /s /b .build\*.dll
 
       - name: Verify library was built
         shell: bash
