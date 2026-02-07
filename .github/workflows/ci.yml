@@ -59,10 +59,12 @@ jobs:
 
       - name: Run build script (Windows)
         if: matrix.os == 'windows-latest'
-        shell: bash
+        shell: cmd
         run: |
-          chmod +x build.sh
-          ./build.sh
+          :: Load the Visual Studio environment so Swift can find the Linker
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          :: Now run the bash script using the initialized environment
+          bash -c "chmod +x build.sh && ./build.sh"
 
       - name: Verify library was built
         shell: bash
