@@ -16,7 +16,19 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     SOURCE_LIB=".build/release/libLoopAlgorithmToPython.dylib"
     DEST_LIB="./loop_to_python_api/dlibs/macos/libLoopAlgorithmToPython.dylib"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    SOURCE_LIB=".build/release/libLoopAlgorithmToPython.so"
+    # Linux: Swift might generate different library names/paths
+    # Check for possible library names
+    if [ -f ".build/release/libLoopAlgorithmToPython.so" ]; then
+        SOURCE_LIB=".build/release/libLoopAlgorithmToPython.so"
+    elif [ -f ".build/release/LoopAlgorithmToPython.so" ]; then
+        SOURCE_LIB=".build/release/LoopAlgorithmToPython.so"
+    elif [ -f ".build/release/libLoopAlgorithmToPython" ]; then
+        SOURCE_LIB=".build/release/libLoopAlgorithmToPython"
+    else
+        echo "ERROR: Could not find Linux library file. Available files:"
+        find .build/release/ -name "*Loop*" -o -name "*.so" 2>/dev/null || echo "No library files found"
+        exit 1
+    fi
     DEST_LIB="./loop_to_python_api/dlibs/linux/libLoopAlgorithmToPython.so"
 elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
     SOURCE_LIB=".build/release/LoopAlgorithmToPython.dll"
