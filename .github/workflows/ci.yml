@@ -64,27 +64,28 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          :: 1. Initialize Visual Studio Environment
+          :: 1. Initialize Visual Studio
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
 
-          :: 2. Set the SDK Root
-          set "SDKROOT=C:\Users\runneradmin\AppData\Local\Programs\Swift\Platforms\6.0.3\Windows.platform\Developer\SDKs\Windows.sdk"
+          :: 2. Set Paths
+          set "SWIFT_ROOT=C:\Users\runneradmin\AppData\Local\Programs\Swift"
+          set "SDKROOT=%SWIFT_ROOT%\Platforms\6.0.3\Windows.platform\Developer\SDKs\Windows.sdk"
+          :: This is the missing piece:
+          set "RESOURCE_DIR=%SWIFT_ROOT%\Toolchains\6.0.3+Asserts\usr\lib\swift"
 
-          :: 3. Fix Cyclic Dependency
-          :: We tell the C compiler (Clang) to ignore the standard module cache and 
-          :: force it to prioritize the Swift-specific module maps.
-          set "SWIFTFLAGS=-sdk %SDKROOT% -I %SDKROOT%\usr\lib\swift -L %SDKROOT%\usr\lib\swift\windows"
+          echo Starting Build with Resource Dir Fix...
+          :: We pass the resource-dir and explicitly include the shims path
+          swift build -c release -v ^
+            -Xswiftc -resource-dir -Xswiftc "%RESOURCE_DIR%" ^
+            -Xswiftc -I -Xswiftc "%RESOURCE_DIR%\shims" ^
+            -Xcc -fno-implicit-modules ^
+            -Xcc -fno-modules ^
+            -Xcc -D_CRT_USE_BUILTIN_OFF ^
+            -Xswiftc -Xfrontend -Xswiftc -disable-implicit-concurrency-module-import
 
-          echo Starting Fresh Swift Build...
-          :: We add -Xcc -fno-implicit-modules to break the cycle during the build
-          swift build -c release -v -Xcc -fno-implicit-modules -Xcc -fno-modules
+          if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
 
-          if %ERRORLEVEL% NEQ 0 (
-            echo "Swift build failed with exit code %ERRORLEVEL%"
-            exit /b %ERRORLEVEL%
-          )
-
-          echo Build finished.
+          echo Build successful!
           dir /s /b .build\*.dll
 
       - name: Verify library was built
