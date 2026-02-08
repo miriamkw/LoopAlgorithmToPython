@@ -51,21 +51,22 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest
 
-      - name: Run build script
+      - name: Run build script (Unix)
+        if: matrix.os != 'windows-2022'
         shell: bash
-        env:
-          # Pin to a stable SDK version to avoid the UCRT cycle
-          WIN_SDK_VER: "10.0.22621.0"
         run: |
-          if [[ "${{ matrix.os }}" == "windows-2022" ]]; then
-            # Construct the path to the specific Windows SDK
-            export SDKROOT="C:/Program Files (x86)/Windows Kits/10/Platforms/UAP/$(echo $WIN_SDK_VER)"
-            # Alternatively, pass the version directly to Swift via -Xcc
-            export SWIFTFLAGS="-Xcc -I\"C:/Program Files (x86)/Windows Kits/10/Include/$WIN_SDK_VER/ucrt\" -Xcc -I\"C:/Program Files (x86)/Windows Kits/10/Include/$WIN_SDK_VER/um\""
-          fi
-          
           chmod +x build.sh
           ./build.sh
+
+      - name: Run build script (Windows)
+        if: matrix.os == 'windows-2022'
+        shell: cmd
+        run: |
+          :: Set up the environment with the specific SDK and Toolset
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" -vcvars_ver=14.29 -win10sdk=10.0.22621.0
+      
+          :: Run the build script using the bash shell provided by Git for Windows
+          bash ./build.sh
 
       - name: Verify library was built
         shell: bash
