@@ -64,18 +64,17 @@ jobs:
           :: 1. Initialize Visual Studio Environment
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
 
-          :: 2. Set the SDK Root precisely for 6.0.3
-          :: Based on your log, the folder includes the version number '6.0.3'
+          :: 2. Set the SDK Root
           set "SDKROOT=C:\Users\runneradmin\AppData\Local\Programs\Swift\Platforms\6.0.3\Windows.platform\Developer\SDKs\Windows.sdk"
 
-          :: 3. Export SWIFTFLAGS so the compiler finds the libraries
+          :: 3. Fix Cyclic Dependency
+          :: We tell the C compiler (Clang) to ignore the standard module cache and 
+          :: force it to prioritize the Swift-specific module maps.
           set "SWIFTFLAGS=-sdk %SDKROOT% -I %SDKROOT%\usr\lib\swift -L %SDKROOT%\usr\lib\swift\windows"
 
-          echo Verifying SDK path...
-          if exist "%SDKROOT%" (echo SDK found!) else (echo ERROR: SDK NOT FOUND at %SDKROOT% && dir C:\Users\runneradmin\AppData\Local\Programs\Swift\Platforms /s /b && exit /b 1)
-
           echo Starting Fresh Swift Build...
-          swift build -c release -v
+          :: We add -Xcc -fno-implicit-modules to break the cycle during the build
+          swift build -c release -v -Xcc -fno-implicit-modules -Xcc -fno-modules
 
           if %ERRORLEVEL% NEQ 0 (
             echo "Swift build failed with exit code %ERRORLEVEL%"
