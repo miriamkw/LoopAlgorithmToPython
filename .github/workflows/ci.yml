@@ -45,7 +45,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: SwiftyLab/setup-swift@latest
         with:
-          swift-version: "5.10"
+          swift-version: "6.0"
 
       - name: Install dependencies
         shell: bash
@@ -64,29 +64,33 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          :: 1. Initialize Visual Studio Environment
+          :: 1. Load Visual Studio Environment
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+      
+          :: 2. Dynamically find the Swift SDK Root
+          :: This looks for where swift.exe is and goes up to the SDK folder
+          for /f "delims=" %%i in ('where swift.exe') do set "SWIFT_BIN_PATH=%%~dpi"
           
-          :: 2. Set the SDK Root
-          set "SDKROOT=C:\Users\runneradmin\AppData\Local\Programs\Swift\Platforms\5.10.1\Windows.platform\Developer\SDKs\Windows.sdk"
-          
-          :: 3. Verify Swift location and run build
-          echo Searching for swift.exe...
-          where swift.exe
-          if %ERRORLEVEL% NEQ 0 (
-            echo "ERROR: swift.exe not found in PATH. Checking manual locations..."
-            dir /s /b C:\Users\runneradmin\AppData\Local\Programs\Swift\swift.exe
+          :: Logic: If Swift is in ...\Toolchains\6.0.0\usr\bin\, 
+          :: the SDK is usually in ...\Platforms\6.0.0\Windows.platform\Developer\SDKs\Windows.sdk
+          :: SwiftyLab usually organizes them under a common 'Swift' root.
+          set "SDKROOT=%SWIFT_BIN_PATH%..\..\..\..\Platforms\Windows.platform\Developer\SDKs\Windows.sdk"
+      
+          :: 3. Verify the path exists (Debugging)
+          echo Resolved SDKROOT to: %SDKROOT%
+          if not exist "%SDKROOT%" (
+              echo WARNING: SDKROOT path not found. Falling back to manual check.
+              dir C:\Users\runneradmin\AppData\Local\Programs\Swift\Platforms /s /b
           )
-
-          echo Starting Fresh Swift Build...
+      
+          echo Starting Fresh Swift Build (Swift 6.0)...
           swift build -c release -v
-          
+      
           if %ERRORLEVEL% NEQ 0 (
             echo "Swift build failed with exit code %ERRORLEVEL%"
             exit /b %ERRORLEVEL%
           )
-
-          :: 4. Show the results
+      
           echo Build finished. Searching for DLL...
           dir /s /b .build\*.dll
 
