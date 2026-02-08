@@ -1,11 +1,10 @@
 #!/bin/bash
 
-echo "Building dynamic c library from Swift code..."
+echo "Building dynamic library..."
 
 # 1. Clean and Build
-# Using -v (verbose) is critical for debugging why it's silent
+# Removing 'swift package update' from every CI run saves time; 'clean' is enough.
 swift package clean
-swift package update
 echo "Building Swift package..."
 swift build --configuration release -v
 
@@ -38,24 +37,20 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
         echo "Failed to copy the .so library to the loop_to_python_api folder."
     fi
 else
-    echo "Detected Linux system..."
-    OS_DIR="linux"
-    EXT="so"
-    PREFIX="lib"
+    OS_DIR="linux"; EXT="so"; PREFIX="lib"
 fi
 
 # 3. DYNAMIC SEARCH
-echo "Searching for LoopAlgorithmToPython.$EXT in .build directory..."
+echo "Searching for library in .build directory..."
 
-# Try searching for both 'libLoopAlgorithmToPython' and 'LoopAlgorithmToPython'
-# We use -iname to ignore case and look specifically for the release folder
-SOURCE_LIB=$(find .build -type f \( -iname "libLoopAlgorithmToPython.$EXT" -o -iname "LoopAlgorithmToPython.$EXT" \) | grep -i "release" | head -n 1)
-
-# If find fails, let's try a direct path check for the standard Windows output location
-if [ -z "$SOURCE_LIB" ]; then
-    DIRECT_WIN_PATH=".build/x86_64-unknown-windows-msvc/release/LoopAlgorithmToPython.dll"
-    if [ -f "$DIRECT_WIN_PATH" ]; then
-        SOURCE_LIB="$DIRECT_WIN_PATH"
+# Try the most likely Windows path first if on Windows
+if [ "$OS_DIR" == "windows" ]; then
+    # Swift 6 on Windows usually outputs here:
+    SOURCE_LIB=$(find .build -name "LoopAlgorithmToPython.dll" | grep -i "release" | head -n 1)
+    
+    # Fallback: Check the explicit target-based path
+    if [ -z "$SOURCE_LIB" ]; then
+        SOURCE_LIB=".build/x86_64-unknown-windows-msvc/release/LoopAlgorithmToPython.dll"
     fi
 fi
 

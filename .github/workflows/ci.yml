@@ -65,10 +65,14 @@ jobs:
         if: matrix.os == 'windows-2022'
         shell: cmd
         run: |
-          :: Set up the environment with the specific SDK and Toolset
+          :: Initialize the environment with the 'stable' SDK and Toolset
+          :: This fixes the cyclic dependency and the 'kernel32.lib' error
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" -vcvars_ver=14.29 -win10sdk=10.0.22621.0
-      
-          :: Run the build script using the bash shell provided by Git for Windows
+          
+          :: Verify Swift can see the environment
+          swift --version
+          
+          :: Run your bash script using the Git-Bash included in the runner
           bash ./build.sh
 
       - name: Verify library was built
