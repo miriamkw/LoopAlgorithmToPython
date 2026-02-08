@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/819432700.svg)](https://doi.org/10.5281/zenodo.18524715)
+
 # LoopAlgorithmToPython
 
 This Swift module uses LoopAlgorithm to create C functions for generating predictions and prediction dates from JSON data.
