@@ -2,7 +2,7 @@ name: CI Workflow
 
 on:
   push:
-    branches: [main, feature/windows-linux-compability]
+    branches: [main]
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]

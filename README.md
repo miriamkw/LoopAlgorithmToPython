@@ -299,9 +299,12 @@ Fetches the dynamic carbohydrates on board based on the provided JSON input.
 
 ## Build Dynamic Library
 
-The file `python_api/libLoopAlgorithmToPython.(dylib|so)` contains the dynamic library that is containing the C-embedded Swift functions. 
+The dynamic libraries are organized in platform-specific directories:
+- **macOS**: `loop_to_python_api/dlibs/macos/libLoopAlgorithmToPython.dylib`
+- **Linux**: `loop_to_python_api/dlibs/linux/libLoopAlgorithmToPython.so` 
+- **Windows**: `loop_to_python_api/dlibs/windows/libLoopAlgorithmToPython.dll` (plus dependencies)
 
-After making changes in the Swift code, rebuild the dynamic library by running `chmod +x build.sh` followed by `./build.sh`.
+After making changes in the Swift code, rebuild the dynamic library by running `chmod +x build.sh` followed by `./build.sh`. The build script automatically detects your platform and places the library in the correct `dlibs/` subdirectory.
 
 ## Installing on Linux
 
