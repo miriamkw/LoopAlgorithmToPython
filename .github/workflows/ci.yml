@@ -64,25 +64,30 @@ jobs:
           :: 1. Initialize Visual Studio
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
 
-          :: 2. Set Paths
+          :: 2. Define our paths clearly
           set "SWIFT_ROOT=C:\Users\runneradmin\AppData\Local\Programs\Swift"
           set "SDKROOT=%SWIFT_ROOT%\Platforms\6.0.3\Windows.platform\Developer\SDKs\Windows.sdk"
-          :: This is the missing piece:
           set "RESOURCE_DIR=%SWIFT_ROOT%\Toolchains\6.0.3+Asserts\usr\lib\swift"
 
-          echo Starting Build with Resource Dir Fix...
-          :: We pass the resource-dir and explicitly include the shims path
+          echo Starting Build with final path mapping...
+
+          :: 3. Execute build with both Resource Dir and SDK Include flags
           swift build -c release -v ^
             -Xswiftc -resource-dir -Xswiftc "%RESOURCE_DIR%" ^
             -Xswiftc -I -Xswiftc "%RESOURCE_DIR%\shims" ^
+            -Xswiftc -I -Xswiftc "%SDKROOT%\usr\lib\swift" ^
             -Xcc -fno-implicit-modules ^
             -Xcc -fno-modules ^
             -Xcc -D_CRT_USE_BUILTIN_OFF ^
             -Xswiftc -Xfrontend -Xswiftc -disable-implicit-concurrency-module-import
 
-          if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+          if %ERRORLEVEL% NEQ 0 (
+            echo "Build failed. Checking for existence of Shims..."
+            dir "%RESOURCE_DIR%\shims"
+            exit /b %ERRORLEVEL%
+          )
 
-          echo Build successful!
+          echo Build successful! Finding your DLL...
           dir /s /b .build\*.dll
 
       - name: Verify library was built
