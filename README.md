@@ -141,6 +141,18 @@ Fetches the active carbohydrates based on the provided JSON input.
 
 -------------------------
 
+### Get Loop Recommendations
+
+`get_loop_recommendations(json_file)`
+
+Uses the Loop algorithm to get comprehensive recommendations in JSON format.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+- **Returns**: A JSON string containing the complete Loop recommendations.
+
+-------------------------
+
 ### Get Active Insulin
 
 `get_active_insulin(json_file)`
@@ -200,7 +212,7 @@ Adds an insulin counteraction effect column to the DataFrame input.
 
 `add_insulin_on_board_to_df(df, basal, isf, cr, insulin_type='novolog', lookback=72)`
 
-Adds an insulin counteraction effect column to the DataFrame input.
+Adds an insulin on board (IOB) column to the DataFrame input.
 
 - **Parameters**: 
   - `df`: The dataframe data input, with at least the columns basal, bolus and CGM, with datetime index.
@@ -209,7 +221,7 @@ Adds an insulin counteraction effect column to the DataFrame input.
   - `cr`: Carbohydrate ratio (grams per unit of insulin). 
   - `insulin_type`: Type of insulin (default 'novolog').
   - `lookback`: Lookback to use for computing insulin on board (default 72).
-- **Returns**: The dataframe with an "ice" column.
+- **Returns**: The dataframe with an "iob" column.
 
 -------------------------
 
