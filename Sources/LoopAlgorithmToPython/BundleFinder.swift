@@ -39,7 +39,7 @@ extension Foundation.Bundle {
 
         for candidate in candidates {
             let bundlePath = candidate?.appendingPathComponent(bundleName + ".bundle")
-            print(bundlePath)
+            print(bundlePath ?? "No bundle path found")
             if let bundle = bundlePath.flatMap(Bundle.init(url:)) {
                 print("BUNDLE:", bundle)
                 return bundle

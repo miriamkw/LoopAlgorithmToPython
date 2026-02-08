@@ -153,6 +153,18 @@ Fetches the active insulin based on the provided JSON input.
 
 -------------------------
 
+### Get Loop Recommendations
+
+`get_loop_recommendations(json_file)`
+
+Uses the Loop algorithm to get comprehensive recommendations in JSON format.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+- **Returns**: A JSON string containing the complete Loop recommendations.
+
+-------------------------
+
 ### Insulin Percent Effect Remaining
 
 `insulin_percent_effect_remaining(minutes, action_duration, peak_activity_time, delay)`
@@ -259,18 +271,56 @@ Fetches the dynamic carbohydrates on board based on the provided JSON input.
   - `json_file`: The JSON data input. See python tests and test files for example inputs.
 - **Returns**: The dynamic carbohydrates on board as a double.
 
+⚠️ **Known Issue**: This function currently has a unit conversion error and may fail with "Conversion Error: g is not compatible with mg/dL·s". See the Known Issues section below for more details.
+
 -------------------------
 
+## Known Issues
 
+### Windows CI Build Limitation
 
+**Issue**: Windows .dll file is not automatically updated via CI  
+**Status**: Temporary limitation due to Swift toolchain issues  
+
+**Description**: While the repository includes a Windows .dll file for the LoopAlgorithmToPython library, the CI system currently cannot automatically rebuild this file for Windows due to Swift toolchain circular dependency issues (`cyclic dependency in module 'ucrt': ucrt -> _Builtin_intrinsics -> ucrt`). 
+
+**Current State**: 
+- ✅ Windows tests run successfully using the existing committed .dll file
+- ✅ macOS (.dylib) and Linux (.so) files are automatically updated via CI
+- ❌ Windows (.dll) file requires manual local builds and commits
+
+**Workaround**: The Windows .dll file can still be built locally and manually committed to the repository. The CI tests on Windows will use the committed .dll file.
+
+**Future Resolution**: This limitation will be resolved when Swift's Windows toolchain issues are fixed upstream.
+
+---
+
+### `get_dynamic_carbs_on_board()` Function
+
+**Issue**: Unit conversion error preventing function execution  
+**Error Message**: `LoopAlgorithm/LoopQuantity.swift:31: Fatal error: Conversion Error: g is not compatible with mg/dL·s`  
+**Status**: Under investigation  
+
+**Description**: The `get_dynamic_carbs_on_board()` function encounters a unit conversion error when attempting to calculate dynamic carbohydrates on board. The error occurs in the underlying LoopAlgorithm library when trying to convert between gram units (for carbohydrates) and glucose rate units (mg/dL per second).
+
+**Workaround**: Currently, no workaround is available. The function exists in the API for future compatibility but should not be used in production until this issue is resolved.
+
+**Test Status**: The corresponding test (`test_get_dynamic_carbs_on_board`) is skipped in the test suite to prevent CI failures.
+
+---
 
 ## Build Dynamic Library
 
-The file `python_api/libLoopAlgorithmToPython.dylib` contains the dynamic library that is containing the C-embedded Swift functions. 
+The dynamic libraries are organized in platform-specific directories:
+- **macOS**: `loop_to_python_api/dlibs/macos/libLoopAlgorithmToPython.dylib`
+- **Linux**: `loop_to_python_api/dlibs/linux/libLoopAlgorithmToPython.so` 
+- **Windows**: `loop_to_python_api/dlibs/windows/libLoopAlgorithmToPython.dll` (plus dependencies)
 
-After making changes in the Swift code, rebuild the dynamic library by running `chmod +x build.sh` followed by `./build.sh`.
+After making changes in the Swift code, rebuild the dynamic library by running `chmod +x build.sh` followed by `./build.sh`. The build script automatically detects your platform and places the library in the correct `dlibs/` subdirectory.
 
+## Installing on Linux
 
+See linux_setup.sh
 
 ## Run Tests
 
@@ -279,7 +329,7 @@ Run command `pytest`.
 
 ## Debugging Advice and Disclaimers
 
-This library does currently only work on Mac, but work is in progress to support other operating systems. 
+This library supports macOS, Linux, and Windows platforms with cross-platform dynamic library loading. 
 
 Debugging with this pipeline can be a pain... Calling functions with python does not give informative error messages, even though the `initialize_exception_handlers()` helps a little bit.
 

@@ -7,55 +7,101 @@
 
 import Foundation
 import LoopAlgorithm
-import HealthKit
 
+// ===== CROSS-PLATFORM EXCEPTION HANDLING =====
 
-func handleException(exception: NSException) {
-    print("Uncaught exception: \(exception.description)")
-    print("Stack trace: \(exception.callStackSymbols.joined(separator: "\n"))")
+private func signalHandler(signal: Int32) {
+    print("Signal \(signal) received")
+    #if os(macOS) || os(iOS) || os(Linux)
+    let symbols = Thread.callStackSymbols
+    print("Stack trace:")
+    symbols.forEach { print($0) }
+    #else
+    print("Stack trace: (limited support on this platform)")
+    #endif
+    exit(signal)
+}
+
+#if os(Linux) || os(Windows)
+    public typealias AlgorithmValue = Double
+#else
+    public typealias AlgorithmValue = LoopQuantity
+#endif
+
+struct AlgorithmFactory {
+    static func createScheduleValue(startDate: Date, endDate: Date, value: Double, unit: String) -> AbsoluteScheduleValue<AlgorithmValue> {
+        #if os(Linux) || os(Windows)
+            // Linux wants the raw Double
+            return AbsoluteScheduleValue<AlgorithmValue>(startDate: startDate, endDate: endDate, value: value)
+        #else
+            // Mac wants the LoopQuantity object
+            let quantity = LoopQuantity(unit: LoopUnit(from: unit), doubleValue: value)
+            return AbsoluteScheduleValue<AlgorithmValue>(startDate: startDate, endDate: endDate, value: quantity)
+        #endif
+    }
 }
 
 @_cdecl("initializeExceptionHandler")
 public func initializeExceptionHandler() {
-    NSSetUncaughtExceptionHandler(handleException)
-}
-
-func signalHandler(signal: Int32) {
-    print("Received signal: \(signal)")
-
-    // Generate a stack trace
-    let symbols = Thread.callStackSymbols
-    print("Stack trace:")
-    for symbol in symbols {
-        print(symbol)
+    #if os(macOS) || os(iOS)
+    NSSetUncaughtExceptionHandler { exception in
+        print("Uncaught exception: \(exception.description)")
+        print("Stack trace: \(exception.callStackSymbols.joined(separator: "\n"))")
     }
-
-    // Exit the program with the signal code
-    exit(signal)
+    #endif
+    
+    let signals = [SIGABRT, SIGFPE, SIGILL, SIGSEGV]
+    #if os(macOS) || os(iOS) || os(Linux)
+    let additionalSignals = [SIGBUS, SIGTRAP]
+    (signals + additionalSignals).forEach { signal($0, signalHandler) }
+    #else
+    signals.forEach { signal($0, signalHandler) }
+    #endif
 }
 
 @_cdecl("initializeSignalHandlers")
 public func initializeSignalHandlers() {
-    signal(SIGTRAP, signalHandler)
-    signal(SIGSEGV, signalHandler)
-    signal(SIGABRT, signalHandler)
-    signal(SIGILL, signalHandler)
-    signal(SIGFPE, signalHandler)
-    // Add other signals as needed
+    initializeExceptionHandler()
 }
 
 @_cdecl("generatePrediction") // Use @_cdecl to expose the function with a C-compatible name
 public func generatePrediction(jsonData: UnsafePointer<Int8>?) -> UnsafeMutablePointer<Double> {
     // TODO: Add opportunity to get prediction effects from only one factor at a time
     
-    let data = getDataFromJson(jsonData: jsonData)
+    // Enhanced input validation
+    guard let jsonData = jsonData else {
+        print("ERROR: generatePrediction - NULL JSON data pointer provided")
+        fatalError("generatePrediction failed: NULL JSON data pointer provided")
+    }
+    
+    let jsonLength = strlen(jsonData)
+    guard jsonLength > 0 else {
+        print("ERROR: generatePrediction - Empty JSON data provided (length: \(jsonLength))")
+        fatalError("generatePrediction failed: Empty JSON data provided")
+    }
+        
+    let data: Data
+    do {
+        data = getDataFromJson(jsonData: jsonData)
+    } catch {
+        print("ERROR: generatePrediction - Failed to convert JSON pointer to Data: \(error)")
+        print("ERROR: generatePrediction - JSON string (first 200 chars): \(String(cString: jsonData).prefix(200))")
+        fatalError("generatePrediction failed: JSON data conversion error - \(error)")
+    }
 
     do {
-        // Decode JSON data
-        let input = try getDecoder().decode(LoopPredictionInput.self, from: data)
+        // Decode JSON data with enhanced error reporting
+        let input = try getDecoder().decode(LoopPredictionInput.self, from: data)       
+        
+        guard !input.glucoseHistory.isEmpty else {
+            print("ERROR: generatePrediction - Empty glucose history provided")
+            fatalError("generatePrediction failed: Empty glucose history in input data")
+        }
 
+        let startDate = input.glucoseHistory.last?.startDate ?? Date()
+               
         let prediction = LoopAlgorithm.generatePrediction(
-            start: input.glucoseHistory.last?.startDate ?? Date(),
+            start: startDate,
             glucoseHistory: input.glucoseHistory,
             doses: input.doses,
             carbEntries: input.carbEntries,
@@ -63,20 +109,55 @@ public func generatePrediction(jsonData: UnsafePointer<Int8>?) -> UnsafeMutableP
             sensitivity: input.sensitivity,
             carbRatio: input.carbRatio,
             algorithmEffectsOptions: .all, // Here we can adjust which predictive factor to output
-            useIntegralRetrospectiveCorrection: input.useIntegralRetrospectiveCorrection
+            useIntegralRetrospectiveCorrection: input.useIntegralRetrospectiveCorrection,
+            includingPositiveVelocityAndRC: input.includePositiveVelocityAndRC
         )
+        
         
         var predictedValues: [Double] = []
                 
         for val in prediction.glucose {
-            predictedValues.append(val.quantity.doubleValue(for: HKUnit(from: "mg/dL")))
+            predictedValues.append(val.quantity.doubleValue(for: LoopUnit(from: "mg/dL")))
         }
+        
+        guard !predictedValues.isEmpty else {
+            print("ERROR: generatePrediction - No predicted values generated")
+            fatalError("generatePrediction failed: Algorithm generated empty prediction result")
+        }
+
         let pointer = UnsafeMutablePointer<Double>.allocate(capacity: predictedValues.count)
         pointer.initialize(from: predictedValues, count: predictedValues.count)
-                
+        
         return pointer
+    } catch let decodingError as DecodingError {
+        print("ERROR: generatePrediction - JSON decoding failed:")
+        switch decodingError {
+        case .dataCorrupted(let context):
+            print("  - Data corrupted: \(context.debugDescription)")
+            print("  - Coding path: \(context.codingPath)")
+        case .keyNotFound(let key, let context):
+            print("  - Key not found: \(key.stringValue)")
+            print("  - Context: \(context.debugDescription)")
+            print("  - Coding path: \(context.codingPath)")
+        case .typeMismatch(let type, let context):
+            print("  - Type mismatch: expected \(type)")
+            print("  - Context: \(context.debugDescription)")
+            print("  - Coding path: \(context.codingPath)")
+        case .valueNotFound(let type, let context):
+            print("  - Value not found: expected \(type)")
+            print("  - Context: \(context.debugDescription)")
+            print("  - Coding path: \(context.codingPath)")
+        @unknown default:
+            print("  - Unknown decoding error: \(decodingError)")
+        }
+        print("ERROR: generatePrediction - JSON content (first 500 chars): \(String(data: data, encoding: .utf8)?.prefix(500) ?? "Unable to convert to string")")
+        fatalError("generatePrediction failed: JSON decoding error - \(decodingError)")
     } catch {
-        fatalError("Error reading or decoding JSON file: \(error)")
+        print("ERROR: generatePrediction - Unexpected error during prediction generation:")
+        print("  - Error type: \(type(of: error))")
+        print("  - Error description: \(error)")
+        print("  - JSON content (first 500 chars): \(String(data: data, encoding: .utf8)?.prefix(500) ?? "Unable to convert to string")")
+        fatalError("generatePrediction failed: Unexpected error - \(error)")
     }
 }
 
@@ -171,7 +252,7 @@ public func getGlucoseEffectVelocity(jsonData: UnsafePointer<Int8>?) -> UnsafeMu
         var glucoseEffectVelocities: [Double] = []
                 
         for val in prediction.effects.insulinCounteraction {
-            glucoseEffectVelocities.append(val.quantity.doubleValue(for: HKUnit(from: "mg/dL·s")))
+            glucoseEffectVelocities.append(val.quantity.doubleValue(for: LoopUnit(from: "mg/dL·s")))
         }
         let pointer = UnsafeMutablePointer<Double>.allocate(capacity: glucoseEffectVelocities.count)
         pointer.initialize(from: glucoseEffectVelocities, count: glucoseEffectVelocities.count)
@@ -226,7 +307,7 @@ public func getGlucoseEffectVelocityAndDates(jsonData: UnsafePointer<Int8>?) -> 
         var predictionsAndDates: String = ""
         for val in output.effects.insulinCounteraction {
             predictionsAndDates += val.startDate.ISO8601Format() + ","
-            predictionsAndDates += val.quantity.doubleValue(for: HKUnit(from: "mg/dL·s")).description + " "
+            predictionsAndDates += val.quantity.doubleValue(for: LoopUnit(from: "mg/dL·s")).description + " "
         }
         let cString = strdup(predictionsAndDates)!
         
@@ -284,6 +365,48 @@ public func insulinPercentEffectRemaining(jsonData: UnsafePointer<Int8>?) -> Dou
     }
 }
 
+@_cdecl("getLoopRecommendations") // Use @_cdecl to expose the function with a C-compatible name
+public func getLoopRecommendations(jsonData: UnsafePointer<Int8>?) -> UnsafePointer<CChar> {
+    let data: Data = getDataFromJson(jsonData: jsonData)
+
+    do {
+        let input = try getDecoder().decode(AlgorithmInputFixture.self, from: data)
+        let output = LoopAlgorithm.run(input: input)
+        let result = output.recommendationResult
+        
+        var data: LoopAlgorithmDoseRecommendation?
+
+        switch result {
+            case .success(let resp_data):
+                data = resp_data
+            case .failure(let e):
+                print("FAIL")
+                print(e)
+        }
+        
+        let encoder: JSONEncoder = JSONEncoder()
+
+        do {
+            // Encode JSON data
+            let jsonData = try encoder.encode(data)
+
+            // Convert JSON data to string
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                let cString: UnsafeMutablePointer<CChar> = strdup(jsonString)!
+                return UnsafePointer<CChar>(cString)
+            }
+
+        } catch {
+            print("Error encoding JSON: \(error)")
+        }
+      
+    } catch {
+        fatalError("Error reading or decoding JSON file: \(error)")
+    }
+    let cString: UnsafeMutablePointer<CChar> = strdup("")!
+    return UnsafePointer<CChar>(cString)
+}
+
 @_cdecl("percentAbsorptionAtPercentTime")
 public func percentAbsorptionAtPercentTime(_ percentTime: Double) -> Double {
     return PiecewiseLinearAbsorption().percentAbsorptionAtPercentTime(percentTime)
@@ -314,8 +437,10 @@ public func getDynamicCarbsOnBoard(jsonData: UnsafePointer<Int8>?) -> Double {
 
         let startDate = dateFormatter.date(from: input.inputICE[0].startAt)!
         let endDate = dateFormatter.date(from: input.inputICE.last!.startAt)!
+
+        // Mixed types: Double for carbRatio, LoopQuantity for ISF (as required by API)
         let carbRatio = [AbsoluteScheduleValue(startDate: startDate, endDate: endDate, value: input.carbRatio)]
-        let isf =  [AbsoluteScheduleValue(startDate: startDate, endDate: endDate, value: HKQuantity(unit: HKUnit(from: "mg/dL"), doubleValue: input.sensitivity))]
+        let isf = [AbsoluteScheduleValue(startDate: startDate, endDate: endDate, value: LoopQuantity(unit: LoopUnit(from: "mg/dL"), doubleValue: input.sensitivity))]
 
         let statuses = [carbEntries[0]].map(
             to: inputICE,
@@ -401,15 +526,15 @@ private func loadICEInputFixture(from inputs: [InputICE]) -> [GlucoseEffectVeloc
     let dateFormatter = ISO8601DateFormatter()
     dateFormatter.formatOptions = [.withFullDate, .withTime, .withColonSeparatorInTime, .withDashSeparatorInDate]
     
-    let unit = HKUnit(from: "mg/dL").unitDivided(by: .minute())
+    let unit = LoopUnit(from: "mg/dL·min")
 
     return inputs.compactMap {
         guard let startDate = dateFormatter.date(from: $0.startAt),
               let endDate = dateFormatter.date(from: $0.endAt) else {
-            return nil
+            return GlucoseEffectVelocity(startDate: Date(), endDate: Date(), quantity: LoopQuantity(unit: unit, doubleValue: 0))
         }
 
-        let quantity = HKQuantity(unit: unit, doubleValue: $0.velocity)
+        let quantity = LoopQuantity(unit: unit, doubleValue: $0.velocity)
         return GlucoseEffectVelocity(
             startDate: startDate,
             endDate: endDate,
@@ -443,19 +568,20 @@ private func carbEntriesFromFixture(_ fixture: [JSONDictionary]) -> [FixtureCarb
         return FixtureCarbEntry(
             absorptionTime: absorptionTime,
             startDate: startAt,
-            quantity: HKQuantity(unit: .gram(), doubleValue: $0["grams"] as! Double), foodType: nil
+            quantity: LoopQuantity(unit: .gram, doubleValue: $0["grams"] as! Double),
+            foodType: nil
         )
     }
 }
 
-public struct FixtureCarbEntry: CarbEntry {
+public struct FixtureCarbEntry: CarbEntry, SampleValue {
     public var absorptionTime: TimeInterval?
     public var startDate: Date
-    public var quantity: HKQuantity
+    public var quantity: LoopQuantity // This will now correctly map to the library's type
     public var foodType: String?
 
     // Explicit initializer
-    public init(absorptionTime: TimeInterval?, startDate: Date, quantity: HKQuantity, foodType: String?) {
+    public init(absorptionTime: TimeInterval?, startDate: Date, quantity: LoopQuantity, foodType: String?) {
         self.absorptionTime = absorptionTime
         self.startDate = startDate
         self.quantity = quantity
@@ -470,7 +596,7 @@ extension FixtureCarbEntry: Codable {
         self.init(
             absorptionTime: try container.decodeIfPresent(TimeInterval.self, forKey: .absorptionTime),
             startDate: try container.decode(Date.self, forKey: .date),
-            quantity: HKQuantity(unit: .gram(), doubleValue: try container.decode(Double.self, forKey: .grams)),
+            quantity: LoopQuantity(unit: .gram, doubleValue: try container.decode(Double.self, forKey: .grams)),
             foodType: try container.decodeIfPresent(String.self, forKey: .foodType)
         )
     }
@@ -479,7 +605,7 @@ extension FixtureCarbEntry: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeIfPresent(absorptionTime, forKey: .absorptionTime)
         try container.encode(startDate, forKey: .date)
-        try container.encode(quantity.doubleValue(for: .gram()), forKey: .grams)
+        try container.encode(quantity.doubleValue(for: .gram), forKey: .grams)
         try container.encodeIfPresent(foodType, forKey: .foodType)
     }
 
@@ -490,7 +616,6 @@ extension FixtureCarbEntry: Codable {
         case foodType
     }
 }
-
 
 // Extension for ISO8601DateFormatter to handle time zone
 extension ISO8601DateFormatter {
@@ -536,7 +661,3 @@ struct LinearAbsorption: CarbAbsorptionComputable {
         }
     }
 }
-
-
-
-

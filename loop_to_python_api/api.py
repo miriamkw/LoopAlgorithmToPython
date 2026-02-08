@@ -10,10 +10,21 @@ import ctypes
 import os
 import ast
 
-# swift_lib = ctypes.CDLL('python_api/libLoopAlgorithmToPython.dylib')
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
-lib_path = os.path.join(current_dir, 'libLoopAlgorithmToPython.dylib')
+dlibs_dir = os.path.join(current_dir, 'dlibs')
+
+if os.name == 'posix':
+    if os.uname().sysname == 'Darwin':  # MacOS
+        lib_path = os.path.join(dlibs_dir, 'macos', 'libLoopAlgorithmToPython.dylib')
+    else:  # Linux
+        lib_path = os.path.join(dlibs_dir, 'linux', 'libLoopAlgorithmToPython.so')
+
+elif os.name == 'nt':  # Windows
+    lib_path = os.path.join(dlibs_dir, 'windows', 'libLoopAlgorithmToPython.dll')
+
+else:
+    raise OSError("Unsupported operating system")
+
 swift_lib = ctypes.CDLL(lib_path)
 
 
@@ -131,6 +142,14 @@ def get_active_insulin(json_file):
 
     return swift_lib.getActiveInsulin(json_bytes)
 
+def get_loop_recommendations(json_file, len=72):
+    json_bytes = helpers.get_bytes_from_json(json_file)
+
+    swift_lib.getLoopRecommendations.argtypes = [ctypes.c_char_p]
+    swift_lib.getLoopRecommendations.restype = ctypes.c_char_p
+
+    result = swift_lib.getLoopRecommendations(json_bytes).decode('utf-8')
+    return result
 
 def add_insulin_counteraction_effect_to_df(df, basal, isf, cr, insulin_type='novolog', batch_size=300, overlap=72):
     """

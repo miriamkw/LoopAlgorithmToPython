@@ -1,5 +1,5 @@
 {
-  "originHash" : "608e8d20b7d88fcbe3c1605524ea7d8b8386ba5c86e3e4b83c871e5da670edb1",
+  "originHash" : "535c0ccff7ca58e9b8188c9289d5f78f212e183e9166c39df1a1e1ef7e2ad8c6",
   "pins" : [
     {
       "identity" : "loopalgorithm",
@@ -7,7 +7,7 @@
       "location" : "https://github.com/tidepool-org/LoopAlgorithm.git",
       "state" : {
         "branch" : "main",
-        "revision" : "6f0697aed001bba75af1e5566a2afdab34ea0fd4"
+        "revision" : "13cb4b45258cee5be1eb2ad941b374dde53de551"
       }
     }
   ],

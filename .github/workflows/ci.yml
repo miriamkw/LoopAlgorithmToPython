@@ -1,73 +1,172 @@
 name: CI Workflow
 
-# Trigger on PR events and direct pushes to main (but not PR merges)
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
-    types:
-      - opened
-      - synchronize
-      - reopened
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
-# Define the jobs to run in the workflow
 jobs:
   build-and-test:
-    runs-on: macos-latest  # Use macOS for Swift and iOS-specific dependencies
+    strategy:
+      fail-fast: false # Prevents one OS from stopping others from building
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-2022]
+    runs-on: ${{ matrix.os }}
+    outputs:
+      target_branch: ${{ steps.vars.outputs.target_branch }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'  # Specify your required Python version
+          python-version: '3.9'
 
-      - name: Set up Swift
+      - name: Set up Swift (macOS)
+        if: matrix.os == 'macos-latest'
         run: |
           sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
-          sudo xcodebuild -runFirstLaunch
+          swift --version
+
+      - name: Set up Swift (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        uses: swift-actions/setup-swift@v2 # Corrected repository name
+        with:
+          swift-version: "6.0"
+
+      - name: Set up Swift (Windows)
+        if: matrix.os == 'windows-2022'
+        uses: SwiftyLab/setup-swift@latest
+        with:
+          swift-version: "6.0"
 
       - name: Install dependencies
+        shell: bash
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest
 
-      - name: Run build script
+      - name: Run build script (Unix)
+        if: matrix.os != 'windows-2022'
+        shell: bash
         run: |
           chmod +x build.sh
           ./build.sh
 
-      - name: Run tests
-        run: |
-          pytest
+      # Windows build temporarily disabled due to Swift toolchain circular dependency issue
+      # The Windows .dll exists in the repo but is not automatically updated like .dylib/.so files
+      # TODO: Re-enable when Swift Windows CI circular dependency is resolved
+      # - name: Run build script (Windows)
+      #   if: matrix.os == 'windows-2022'
+      #   shell: cmd
+      #   run: |
+      #     :: 1. Initialize MSVC with the stable Windows SDK positional arguments
+      #     call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" x64 10.0.22621.0 -vcvars_ver=14.29
+      #     
+      #     :: 2. Explicitly set SDKROOT to the Swift Windows Platform SDK
+      #     :: This ensures Swift finds the Standard Library while using the MSVC headers above
+      #     set SDKROOT=C:\Users\runneradmin\AppData\Local\Programs\Swift\Platforms\6.0.3\Windows.platform\Developer\SDKs\Windows.sdk
+      #     
+      #     :: 3. Clear SWIFTFLAGS to prevent interference with the build process
+      #     set SWIFTFLAGS=
+      #     
+      #     :: 4. Run the build
+      #     bash ./build.sh
 
-      - name: Commit and push the generated .dylib file
-        # Skip if this is a PR merge (indicated by commit message containing "Merge pull request")
-        if: github.event_name == 'pull_request' || !contains(github.event.head_commit.message, 'Merge pull request')
+      - name: Verify library was built
+        shell: bash
         run: |
-          git config --local user.name "GitHub Action"
-          git config --local user.email "action@github.com"
-          
-          # Determine target branch
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            TARGET_BRANCH="${{ github.event.pull_request.head.ref }}"
-          else
-            TARGET_BRANCH="${{ github.ref_name }}"
+          echo "Checking if library was built successfully..."
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            EXPECTED_LIB="loop_to_python_api/dlibs/macos/libLoopAlgorithmToPython.dylib"
+          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            EXPECTED_LIB="loop_to_python_api/dlibs/linux/libLoopAlgorithmToPython.so"
+          elif [[ "${{ matrix.os }}" == "windows-2022" ]]; then
+            echo "Windows build disabled - using existing committed .dll for tests"
+            echo "Windows .dll file exists but is not automatically updated in CI"
+            ls -la "loop_to_python_api/dlibs/windows/libLoopAlgorithmToPython.dll" || echo "Note: Windows .dll should be committed to repo"
+            exit 0
           fi
           
-          # Fetch and checkout the target branch
-          git fetch origin
-          git checkout -B $TARGET_BRANCH origin/$TARGET_BRANCH
-          
-          # Add and commit the .dylib file
-          git add ./loop_to_python_api/libLoopAlgorithmToPython.dylib
-          git commit -m "Add generated libLoopAlgorithmToPython.dylib" || echo "No changes to commit"
-          
-          # Push to the target branch
-          git push origin $TARGET_BRANCH
+          echo "Expected library: $EXPECTED_LIB"
+          if [ -f "$EXPECTED_LIB" ]; then
+            echo "✓ Library found: $EXPECTED_LIB"
+            ls -la "$EXPECTED_LIB"
+          else
+            echo "✗ Library NOT found: $EXPECTED_LIB"
+            echo "Contents of dlibs directory:"
+            find loop_to_python_api/dlibs/ -type f -name "*" 2>/dev/null || echo "No files found in dlibs/"
+            echo "Contents of .build/release/:"
+            find .build/release/ -name "*" -type f 2>/dev/null || echo "No files found in .build/release/"
+            exit 1
+          fi
 
+      - name: Run tests
+        shell: bash
+        run: |
+          # Help Linux find the shared library
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/loop_to_python_api/dlibs/linux/
+          # Help macOS find the shared library
+          export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$(pwd)/loop_to_python_api/dlibs/macos/
+          # Help Windows find the shared library
+          export PATH=$PATH:$(pwd)/loop_to_python_api/dlibs/windows/
+          pytest -v -s
+
+      - name: Upload Library Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: library-${{ matrix.os }}
+          path: |
+            loop_to_python_api/dlibs/macos/*.dylib
+            loop_to_python_api/dlibs/linux/*.so
+            loop_to_python_api/dlibs/windows/*.dll
+          if-no-files-found: error
+
+      - name: Set Target Branch
+        id: vars
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "target_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "target_branch=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+  commit-generated-files:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: success() && (github.event_name == 'push' || github.event_name == 'pull_request')
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build-and-test.outputs.target_branch }}
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: temp_libs
+
+      - name: Organize and Commit
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          
+          mkdir -p loop_to_python_api/dlibs/macos/
+          mkdir -p loop_to_python_api/dlibs/linux/
+          mkdir -p loop_to_python_api/dlibs/windows/
+          
+          # Move files and clean up temp folders
+          find temp_libs/ -name "*.dylib" -exec mv {} loop_to_python_api/dlibs/macos/ \;
+          find temp_libs/ -name "*.so" -exec mv {} loop_to_python_api/dlibs/linux/ \;
+          find temp_libs/ -name "*.dll" -exec mv {} loop_to_python_api/dlibs/windows/ \;
+          
+          git add loop_to_python_api/dlibs/
+          git commit -m "chore: update binaries for macOS, Linux, and Windows [skip ci]" || echo "No changes to commit"
+          git push origin ${{ needs.build-and-test.outputs.target_branch }}
