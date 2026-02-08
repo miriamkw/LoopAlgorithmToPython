@@ -64,34 +64,33 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          :: 1. Initialize Visual Studio
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
 
-          :: 2. Define our paths clearly
           set "SWIFT_ROOT=C:\Users\runneradmin\AppData\Local\Programs\Swift"
           set "SDKROOT=%SWIFT_ROOT%\Platforms\6.0.3\Windows.platform\Developer\SDKs\Windows.sdk"
-          set "RESOURCE_DIR=%SWIFT_ROOT%\Toolchains\6.0.3+Asserts\usr\lib\swift"
 
-          echo Starting Build with final path mapping...
+          :: Adjusting to the platform-specific lib folder
+          set "RESOURCE_DIR=%SWIFT_ROOT%\Toolchains\6.0.3+Asserts\usr\lib\swift\windows"
 
-          :: 3. Execute build with both Resource Dir and SDK Include flags
+          echo Verifying Paths...
+          if not exist "%RESOURCE_DIR%\shims" (
+              echo "Shims not found in %RESOURCE_DIR%, trying parent..."
+              set "RESOURCE_DIR=%SWIFT_ROOT%\Toolchains\6.0.3+Asserts\usr\lib\swift"
+          )
+
+          dir "%RESOURCE_DIR%\shims"
+
+          echo Starting Build with Corrected Paths...
           swift build -c release -v ^
             -Xswiftc -resource-dir -Xswiftc "%RESOURCE_DIR%" ^
             -Xswiftc -I -Xswiftc "%RESOURCE_DIR%\shims" ^
-            -Xswiftc -I -Xswiftc "%SDKROOT%\usr\lib\swift" ^
+            -Xswiftc -L -Xswiftc "%RESOURCE_DIR%" ^
             -Xcc -fno-implicit-modules ^
             -Xcc -fno-modules ^
             -Xcc -D_CRT_USE_BUILTIN_OFF ^
             -Xswiftc -Xfrontend -Xswiftc -disable-implicit-concurrency-module-import
 
-          if %ERRORLEVEL% NEQ 0 (
-            echo "Build failed. Checking for existence of Shims..."
-            dir "%RESOURCE_DIR%\shims"
-            exit /b %ERRORLEVEL%
-          )
-
-          echo Build successful! Finding your DLL...
-          dir /s /b .build\*.dll
+          if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
 
       - name: Verify library was built
         shell: bash
