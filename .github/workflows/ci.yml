@@ -65,17 +65,17 @@ jobs:
         if: matrix.os == 'windows-2022'
         shell: cmd
         run: |
-          :: 1. Correct Argument Order: [arch] [winsdk] [-vcvars_ver]
-          :: This forces the use of the stable 22621 SDK
+          :: 1. Initialize MSVC with the stable Windows SDK positional arguments
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" x64 10.0.22621.0 -vcvars_ver=14.29
           
-          :: 2. Clear out the pre-set Runner variables
-          :: The GitHub Runner sets these to the 'broken' 26100 paths by default.
-          :: Clearing them lets 'vcvars' and 'swift' do their jobs properly.
-          set SDKROOT=
+          :: 2. Explicitly set SDKROOT to the Swift Windows Platform SDK
+          :: This ensures Swift finds the Standard Library while using the MSVC headers above
+          set SDKROOT=C:\Users\runneradmin\AppData\Local\Programs\Swift\Platforms\6.0.3\Windows.platform\Developer\SDKs\Windows.sdk
+          
+          :: 3. Clear SWIFTFLAGS to prevent interference with the build process
           set SWIFTFLAGS=
           
-          :: 3. Run the build
+          :: 4. Run the build
           bash ./build.sh
 
       - name: Verify library was built
