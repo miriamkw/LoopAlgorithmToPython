@@ -1,31 +1,9 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 5.10
 import PackageDescription
-
-let packagePlatforms: [SupportedPlatform]
-let packageLocalization: LanguageTag?
-
-#if os(Windows)
-    packagePlatforms = [
-        .macOS(.v13),
-        .iOS(.v15),
-        .tvOS(.v15),
-        .watchOS(.v8)
-    ]
-    packageLocalization = nil
-#else
-    packagePlatforms = [
-        .macOS(.v13),
-        .iOS(.v15),
-        .tvOS(.v15),
-        .watchOS(.v8)
-    ]
-    packageLocalization = "no"
-#endif
 
 let package = Package(
     name: "LoopAlgorithmToPython",
-    defaultLocalization: packageLocalization,
-    platforms: packagePlatforms,
+    defaultLocalization: "no",
     products: [
         .library(
             name: "LoopAlgorithmToPython",
