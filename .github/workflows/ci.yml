@@ -65,14 +65,17 @@ jobs:
         if: matrix.os == 'windows-2022'
         shell: cmd
         run: |
-          :: Initialize the environment with the 'stable' SDK and Toolset
-          :: This fixes the cyclic dependency and the 'kernel32.lib' error
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" -vcvars_ver=14.29 -win10sdk=10.0.22621.0
+          :: 1. Correct Argument Order: [arch] [winsdk] [-vcvars_ver]
+          :: This forces the use of the stable 22621 SDK
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" x64 10.0.22621.0 -vcvars_ver=14.29
           
-          :: Verify Swift can see the environment
-          swift --version
+          :: 2. Clear out the pre-set Runner variables
+          :: The GitHub Runner sets these to the 'broken' 26100 paths by default.
+          :: Clearing them lets 'vcvars' and 'swift' do their jobs properly.
+          set SDKROOT=
+          set SWIFTFLAGS=
           
-          :: Run your bash script using the Git-Bash included in the runner
+          :: 3. Run the build
           bash ./build.sh
 
       - name: Verify library was built
