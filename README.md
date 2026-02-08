@@ -153,6 +153,18 @@ Fetches the active insulin based on the provided JSON input.
 
 -------------------------
 
+### Get Loop Recommendations
+
+`get_loop_recommendations(json_file)`
+
+Uses the Loop algorithm to get comprehensive recommendations in JSON format.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+- **Returns**: A JSON string containing the complete Loop recommendations.
+
+-------------------------
+
 ### Insulin Percent Effect Remaining
 
 `insulin_percent_effect_remaining(minutes, action_duration, peak_activity_time, delay)`
