@@ -265,6 +265,24 @@ Fetches the dynamic carbohydrates on board based on the provided JSON input.
 
 ## Known Issues
 
+### Windows CI Build Limitation
+
+**Issue**: Windows .dll file is not automatically updated via CI  
+**Status**: Temporary limitation due to Swift toolchain issues  
+
+**Description**: While the repository includes a Windows .dll file for the LoopAlgorithmToPython library, the CI system currently cannot automatically rebuild this file for Windows due to Swift toolchain circular dependency issues (`cyclic dependency in module 'ucrt': ucrt -> _Builtin_intrinsics -> ucrt`). 
+
+**Current State**: 
+- ✅ Windows tests run successfully using the existing committed .dll file
+- ✅ macOS (.dylib) and Linux (.so) files are automatically updated via CI
+- ❌ Windows (.dll) file requires manual local builds and commits
+
+**Workaround**: The Windows .dll file can still be built locally and manually committed to the repository. The CI tests on Windows will use the committed .dll file.
+
+**Future Resolution**: This limitation will be resolved when Swift's Windows toolchain issues are fixed upstream.
+
+---
+
 ### `get_dynamic_carbs_on_board()` Function
 
 **Issue**: Unit conversion error preventing function execution  
