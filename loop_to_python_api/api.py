@@ -52,6 +52,46 @@ def generate_prediction(json_file, len=72):
     return [result[i] for i in range(len)]
 
 
+def generate_insulin_prediction(json_file, len=72):
+    json_bytes = helpers.get_bytes_from_json(json_file)
+
+    swift_lib.generateInsulinPrediction.argtypes = [ctypes.c_char_p]
+    swift_lib.generateInsulinPrediction.restype = ctypes.POINTER(ctypes.c_double)
+
+    result = swift_lib.generateInsulinPrediction(json_bytes)
+    return [result[i] for i in range(len)]
+
+
+def generate_carbs_prediction(json_file, len=72):
+    json_bytes = helpers.get_bytes_from_json(json_file)
+
+    swift_lib.generateCarbsPrediction.argtypes = [ctypes.c_char_p]
+    swift_lib.generateCarbsPrediction.restype = ctypes.POINTER(ctypes.c_double)
+
+    result = swift_lib.generateCarbsPrediction(json_bytes)
+    return [result[i] for i in range(len)]
+
+
+def generate_momentum_prediction(json_file, len=72):
+    json_bytes = helpers.get_bytes_from_json(json_file)
+
+    swift_lib.generateMomentumPrediction.argtypes = [ctypes.c_char_p]
+    swift_lib.generateMomentumPrediction.restype = ctypes.POINTER(ctypes.c_double)
+
+    result = swift_lib.generateMomentumPrediction(json_bytes)
+    return [result[i] for i in range(len)]
+
+
+def generate_retrospection_prediction(json_file, len=72):
+    json_bytes = helpers.get_bytes_from_json(json_file)
+
+    swift_lib.generateRetrospectionPrediction.argtypes = [ctypes.c_char_p]
+    swift_lib.generateRetrospectionPrediction.restype = ctypes.POINTER(ctypes.c_double)
+
+    result = swift_lib.generateRetrospectionPrediction(json_bytes)
+    return [result[i] for i in range(len)]
+
+
 def get_prediction_dates(json_file):
     json_bytes = helpers.get_bytes_from_json(json_file)
 
@@ -65,9 +105,81 @@ def get_prediction_dates(json_file):
     return date_list
 
 
+def get_insulin_prediction_dates(json_file):
+    json_bytes = helpers.get_bytes_from_json(json_file)
+
+    swift_lib.getInsulinPredictionDates.argtypes = [ctypes.c_char_p]
+    swift_lib.getInsulinPredictionDates.restype = ctypes.c_char_p
+
+    result = swift_lib.getInsulinPredictionDates(json_bytes).decode('utf-8')
+    date_list = result.split(',')[:-1]
+
+    return date_list
+
+
+def get_carbs_prediction_dates(json_file):
+    json_bytes = helpers.get_bytes_from_json(json_file)
+
+    swift_lib.getCarbsPredictionDates.argtypes = [ctypes.c_char_p]
+    swift_lib.getCarbsPredictionDates.restype = ctypes.c_char_p
+
+    result = swift_lib.getCarbsPredictionDates(json_bytes).decode('utf-8')
+    date_list = result.split(',')[:-1]
+
+    return date_list
+
+
+def get_momentum_prediction_dates(json_file):
+    json_bytes = helpers.get_bytes_from_json(json_file)
+
+    swift_lib.getMomentumPredictionDates.argtypes = [ctypes.c_char_p]
+    swift_lib.getMomentumPredictionDates.restype = ctypes.c_char_p
+
+    result = swift_lib.getMomentumPredictionDates(json_bytes).decode('utf-8')
+    date_list = result.split(',')[:-1]
+
+    return date_list
+
+
+def get_retrospection_prediction_dates(json_file):
+    json_bytes = helpers.get_bytes_from_json(json_file)
+
+    swift_lib.getRetrospectionPredictionDates.argtypes = [ctypes.c_char_p]
+    swift_lib.getRetrospectionPredictionDates.restype = ctypes.c_char_p
+
+    result = swift_lib.getRetrospectionPredictionDates(json_bytes).decode('utf-8')
+    date_list = result.split(',')[:-1]
+
+    return date_list
+
+
 def get_prediction_values_and_dates(json_file):
     dates = get_prediction_dates(json_file)
     values = generate_prediction(json_file, len(dates))
+    return values, dates
+
+
+def get_insulin_prediction_values_and_dates(json_file):
+    dates = get_insulin_prediction_dates(json_file)
+    values = generate_insulin_prediction(json_file, len(dates))
+    return values, dates
+
+
+def get_carbs_prediction_values_and_dates(json_file):
+    dates = get_carbs_prediction_dates(json_file)
+    values = generate_carbs_prediction(json_file, len(dates))
+    return values, dates
+
+
+def get_momentum_prediction_values_and_dates(json_file):
+    dates = get_momentum_prediction_dates(json_file)
+    values = generate_momentum_prediction(json_file, len(dates))
+    return values, dates
+
+
+def get_retrospection_prediction_values_and_dates(json_file):
+    dates = get_retrospection_prediction_dates(json_file)
+    values = generate_retrospection_prediction(json_file, len(dates))
     return values, dates
 
 

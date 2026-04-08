@@ -69,6 +69,154 @@ Combines the `generate_prediction` and `get_prediction_dates` functions to retur
 
 -------------------------
 
+### Generate Insulin Prediction
+
+`generate_insulin_prediction(json_file, len=72)`
+
+Generates a glucose prediction based on insulin effects only.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+  - `len` (optional): The number of prediction values to generate. Defaults to 72.
+- **Returns**: A list of prediction values based only on insulin effects.
+
+-------------------------
+
+### Generate Carbs Prediction
+
+`generate_carbs_prediction(json_file, len=72)`
+
+Generates a glucose prediction based on carbohydrate effects only.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+  - `len` (optional): The number of prediction values to generate. Defaults to 72.
+- **Returns**: A list of prediction values based only on carbohydrate effects.
+
+-------------------------
+
+### Generate Momentum Prediction
+
+`generate_momentum_prediction(json_file, len=72)`
+
+Generates a glucose prediction based on glucose momentum effects only.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+  - `len` (optional): The number of prediction values to generate. Defaults to 72.
+- **Returns**: A list of prediction values based only on glucose momentum effects.
+
+-------------------------
+
+### Generate Retrospection Prediction
+
+`generate_retrospection_prediction(json_file, len=72)`
+
+Generates a glucose prediction based on retrospective correction effects only.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+  - `len` (optional): The number of prediction values to generate. Defaults to 72.
+- **Returns**: A list of prediction values based only on retrospective correction effects.
+
+-------------------------
+
+### Get Insulin Prediction Dates
+
+`get_insulin_prediction_dates(json_file)`
+
+Fetches prediction dates for insulin-only predictions.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+- **Returns**: A list of prediction dates as strings for insulin-only predictions.
+
+-------------------------
+
+### Get Carbs Prediction Dates
+
+`get_carbs_prediction_dates(json_file)`
+
+Fetches prediction dates for carbohydrate-only predictions.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+- **Returns**: A list of prediction dates as strings for carbohydrate-only predictions.
+
+-------------------------
+
+### Get Momentum Prediction Dates
+
+`get_momentum_prediction_dates(json_file)`
+
+Fetches prediction dates for glucose momentum-only predictions.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+- **Returns**: A list of prediction dates as strings for glucose momentum-only predictions.
+
+-------------------------
+
+### Get Retrospection Prediction Dates
+
+`get_retrospection_prediction_dates(json_file)`
+
+Fetches prediction dates for retrospective correction-only predictions.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+- **Returns**: A list of prediction dates as strings for retrospective correction-only predictions.
+
+-------------------------
+
+### Get Insulin Prediction Values and Dates
+
+`get_insulin_prediction_values_and_dates(json_file)`
+
+Combines insulin-only prediction generation and date retrieval.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+- **Returns**: A tuple containing a list of insulin-only prediction values and a list of prediction dates.
+
+-------------------------
+
+### Get Carbs Prediction Values and Dates
+
+`get_carbs_prediction_values_and_dates(json_file)`
+
+Combines carbohydrate-only prediction generation and date retrieval.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+- **Returns**: A tuple containing a list of carbohydrate-only prediction values and a list of prediction dates.
+
+-------------------------
+
+### Get Momentum Prediction Values and Dates
+
+`get_momentum_prediction_values_and_dates(json_file)`
+
+Combines glucose momentum-only prediction generation and date retrieval.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+- **Returns**: A tuple containing a list of glucose momentum-only prediction values and a list of prediction dates.
+
+-------------------------
+
+### Get Retrospection Prediction Values and Dates
+
+`get_retrospection_prediction_values_and_dates(json_file)`
+
+Combines retrospective correction-only prediction generation and date retrieval.
+
+- **Parameters**: 
+  - `json_file`: The JSON data input. See python tests and test files for example inputs.
+- **Returns**: A tuple containing a list of retrospective correction-only prediction values and a list of prediction dates.
+
+-------------------------
+
 ### Get Glucose Effect Velocity 
 
 `get_glucose_effect_velocity(json_file, len=72)`
@@ -325,6 +473,92 @@ See linux_setup.sh
 ## Run Tests
 
 Run command `pytest`.
+
+## Examples and Plotting
+
+### Prediction Trajectories Visualization
+
+The repository includes a comprehensive plotting script that demonstrates the different prediction trajectories generated by each algorithm effects option.
+
+#### Running the Plotting Script
+
+```bash
+python examples/plot_predictions.py
+```
+
+This script will:
+- Load test data from `python_tests/test_files/generate_prediction_input.json`
+- Generate predictions using all 5 prediction methods:
+  - All effects combined (baseline)
+  - Insulin effects only
+  - Carbohydrate effects only
+  - Glucose momentum effects only
+  - Retrospective correction effects only
+- Create comprehensive visualizations showing:
+  - **Main trajectory plot**: All prediction curves on one graph with historical glucose context
+  - **Individual effects comparison**: Side-by-side subplots comparing each effect type to the baseline
+  - **Event annotations**: Carbohydrate entries and insulin bolus doses marked on the timeline
+- Calculate and display summary statistics for each prediction method
+- Save high-quality PNG and PDF versions of the plots to `examples/plots/`
+
+#### Requirements
+
+Install plotting dependencies:
+```bash
+pip install matplotlib
+```
+
+Or install all requirements:
+```bash
+pip install -r requirements.txt
+```
+
+#### Output
+
+The script generates:
+- **Interactive plots**: Displayed during execution for immediate analysis
+- **High-quality exports**: 
+  - `examples/plots/glucose_prediction_trajectories.png/pdf` - Main comparison plot
+  - `examples/plots/algorithm_effects_comparison.png/pdf` - Individual effects subplots
+- **Console statistics**: Detailed numerical summary of prediction characteristics
+
+#### Understanding the Plots
+
+- **All Effects (Blue)**: The complete Loop algorithm prediction combining all factors
+- **Insulin Only (Purple)**: Shows glucose impact from insulin doses alone
+- **Carbs Only (Orange)**: Shows glucose impact from carbohydrate entries alone  
+- **Momentum Only (Red)**: Shows glucose trends based on recent glucose velocity
+- **Retrospection Only (Green)**: Shows adjustments based on prediction vs. actual glucose discrepancies
+
+This visualization helps understand how each algorithm component contributes to the final glucose prediction and can be valuable for:
+- **Research**: Analyzing individual algorithm component behavior
+- **Education**: Understanding how different factors influence glucose predictions
+- **Validation**: Verifying that the new prediction functions work correctly
+- **Clinical insight**: Seeing the relative impact of insulin, carbs, and other factors
+
+### Basic Usage Example
+
+```python
+# Generate predictions with specific algorithm effects
+from loop_to_python_api.api import *
+
+# Initialize exception handlers (recommended)
+initialize_exception_handlers()
+
+# Load your input data (JSON format)
+input_data = {...}  # Your prediction input data
+
+# Generate different types of predictions
+all_values, all_dates = get_prediction_values_and_dates(input_data)
+insulin_values, insulin_dates = get_insulin_prediction_values_and_dates(input_data)
+carbs_values, carbs_dates = get_carbs_prediction_values_and_dates(input_data)
+momentum_values, momentum_dates = get_momentum_prediction_values_and_dates(input_data)
+retro_values, retro_dates = get_retrospection_prediction_values_and_dates(input_data)
+
+# Compare the different prediction approaches
+print(f"All effects prediction range: {min(all_values):.1f} - {max(all_values):.1f} mg/dL")
+print(f"Insulin-only prediction range: {min(insulin_values):.1f} - {max(insulin_values):.1f} mg/dL")
+```
 
 
 ## Debugging Advice and Disclaimers

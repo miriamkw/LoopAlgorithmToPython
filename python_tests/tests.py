@@ -4,8 +4,20 @@ import pytest
 from loop_to_python_api.api import (
     initialize_exception_handlers,
     generate_prediction,
+    generate_insulin_prediction,
+    generate_carbs_prediction,
+    generate_momentum_prediction,
+    generate_retrospection_prediction,
     get_prediction_dates,
+    get_insulin_prediction_dates,
+    get_carbs_prediction_dates,
+    get_momentum_prediction_dates,
+    get_retrospection_prediction_dates,
     get_prediction_values_and_dates,
+    get_insulin_prediction_values_and_dates,
+    get_carbs_prediction_values_and_dates,
+    get_momentum_prediction_values_and_dates,
+    get_retrospection_prediction_values_and_dates,
     get_dose_recommendations,
     get_glucose_effect_velocity,
     get_glucose_effect_velocity_dates,
@@ -62,6 +74,94 @@ def test_get_prediction_values_and_dates():
     assert isinstance(dates, list), "The prediction dates should be a list."
     assert all(isinstance(value, (int, float)) for value in values), "All prediction values should be integers or floats."
     assert all(isinstance(date, str) for date in dates), "All prediction dates should be strings."
+
+
+def test_generate_insulin_prediction():
+    prediction_input = get_generate_prediction_input()
+    prediction_values = generate_insulin_prediction(prediction_input)
+    assert isinstance(prediction_values, list)
+
+
+def test_generate_carbs_prediction():
+    prediction_input = get_generate_prediction_input()
+    prediction_values = generate_carbs_prediction(prediction_input)
+    assert isinstance(prediction_values, list)
+
+
+def test_generate_momentum_prediction():
+    prediction_input = get_generate_prediction_input()
+    prediction_values = generate_momentum_prediction(prediction_input)
+    assert isinstance(prediction_values, list)
+
+
+def test_generate_retrospection_prediction():
+    prediction_input = get_generate_prediction_input()
+    prediction_values = generate_retrospection_prediction(prediction_input)
+    assert isinstance(prediction_values, list)
+
+
+def test_get_insulin_prediction_dates():
+    prediction_input = get_generate_prediction_input()
+    prediction_dates = get_insulin_prediction_dates(prediction_input)
+    assert isinstance(prediction_dates, list)
+
+
+def test_get_carbs_prediction_dates():
+    prediction_input = get_generate_prediction_input()
+    prediction_dates = get_carbs_prediction_dates(prediction_input)
+    assert isinstance(prediction_dates, list)
+
+
+def test_get_momentum_prediction_dates():
+    prediction_input = get_generate_prediction_input()
+    prediction_dates = get_momentum_prediction_dates(prediction_input)
+    assert isinstance(prediction_dates, list)
+
+
+def test_get_retrospection_prediction_dates():
+    prediction_input = get_generate_prediction_input()
+    prediction_dates = get_retrospection_prediction_dates(prediction_input)
+    assert isinstance(prediction_dates, list)
+
+
+def test_get_insulin_prediction_values_and_dates():
+    prediction_input = get_generate_prediction_input()
+    values, dates = get_insulin_prediction_values_and_dates(prediction_input)
+
+    assert isinstance(values, list), "The insulin prediction values should be a list."
+    assert isinstance(dates, list), "The insulin prediction dates should be a list."
+    assert all(isinstance(value, (int, float)) for value in values), "All insulin prediction values should be integers or floats."
+    assert all(isinstance(date, str) for date in dates), "All insulin prediction dates should be strings."
+
+
+def test_get_carbs_prediction_values_and_dates():
+    prediction_input = get_generate_prediction_input()
+    values, dates = get_carbs_prediction_values_and_dates(prediction_input)
+
+    assert isinstance(values, list), "The carbs prediction values should be a list."
+    assert isinstance(dates, list), "The carbs prediction dates should be a list."
+    assert all(isinstance(value, (int, float)) for value in values), "All carbs prediction values should be integers or floats."
+    assert all(isinstance(date, str) for date in dates), "All carbs prediction dates should be strings."
+
+
+def test_get_momentum_prediction_values_and_dates():
+    prediction_input = get_generate_prediction_input()
+    values, dates = get_momentum_prediction_values_and_dates(prediction_input)
+
+    assert isinstance(values, list), "The momentum prediction values should be a list."
+    assert isinstance(dates, list), "The momentum prediction dates should be a list."
+    assert all(isinstance(value, (int, float)) for value in values), "All momentum prediction values should be integers or floats."
+    assert all(isinstance(date, str) for date in dates), "All momentum prediction dates should be strings."
+
+
+def test_get_retrospection_prediction_values_and_dates():
+    prediction_input = get_generate_prediction_input()
+    values, dates = get_retrospection_prediction_values_and_dates(prediction_input)
+
+    assert isinstance(values, list), "The retrospection prediction values should be a list."
+    assert isinstance(dates, list), "The retrospection prediction dates should be a list."
+    assert all(isinstance(value, (int, float)) for value in values), "All retrospection prediction values should be integers or floats."
+    assert all(isinstance(date, str) for date in dates), "All retrospection prediction dates should be strings."
 
 
 @pytest.mark.skipif(platform.system() == "Windows", reason="Windows compatibility issue - test disabled for Windows builds")
