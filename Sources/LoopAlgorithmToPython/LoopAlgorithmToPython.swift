@@ -108,7 +108,7 @@ public func generatePrediction(jsonData: UnsafePointer<Int8>?) -> UnsafeMutableP
             basal: input.basal,
             sensitivity: input.sensitivity,
             carbRatio: input.carbRatio,
-            algorithmEffectsOptions: .all, // Here we can adjust which predictive factor to output
+            algorithmEffectsOptions: .insulin, // Here we can adjust which predictive factor to output
             useIntegralRetrospectiveCorrection: input.useIntegralRetrospectiveCorrection,
             includingPositiveVelocityAndRC: input.includePositiveVelocityAndRC
         )
@@ -544,7 +544,7 @@ public func getPredictionDates(jsonData: UnsafePointer<Int8>?) -> UnsafePointer<
             basal: input.basal,
             sensitivity: input.sensitivity,
             carbRatio: input.carbRatio,
-            algorithmEffectsOptions: .all,
+            algorithmEffectsOptions: .insulin,
             useIntegralRetrospectiveCorrection: input.useIntegralRetrospectiveCorrection
         )
         // Prepare prediction dates as a comma-separated string
@@ -734,7 +734,7 @@ public func getGlucoseEffectVelocity(jsonData: UnsafePointer<Int8>?) -> UnsafeMu
             basal: input.basal,
             sensitivity: input.sensitivity,
             carbRatio: input.carbRatio,
-            algorithmEffectsOptions: .all, // Here we can adjust which predictive factor to output
+            algorithmEffectsOptions: .insulin, // Here we can adjust which predictive factor to output
             useIntegralRetrospectiveCorrection: input.useIntegralRetrospectiveCorrection
         )
         var glucoseEffectVelocities: [Double] = []
@@ -766,7 +766,7 @@ public func getGlucoseEffectVelocityDates(jsonData: UnsafePointer<Int8>?) -> Uns
             basal: input.basal,
             sensitivity: input.sensitivity,
             carbRatio: input.carbRatio,
-            algorithmEffectsOptions: .all,
+            algorithmEffectsOptions: .insulin,
             useIntegralRetrospectiveCorrection: input.useIntegralRetrospectiveCorrection
         )
         
